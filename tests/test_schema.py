@@ -26,6 +26,7 @@ def test_init_db_creates_kpi_panel(tmp_path):
         "unit",
         "source_url",
         "fx_basis",
+        "definition_version",
     }
 
 
@@ -60,3 +61,24 @@ def test_upsert_is_idempotent(tmp_path):
     finally:
         con.close()
     assert n == 1
+
+
+def test_definition_versions_coexist(tmp_path):
+    """Same metric/quarter under two definition versions are distinct rows."""
+    db = tmp_path / "test.duckdb"
+    common = dict(
+        company="NU", period_end=dt.date(2025, 9, 30), metric="efficiency_ratio",
+        unit="pct", source_url="https://example.com/f", fx_basis="n/a",
+    )
+    rows = [
+        KpiRow(value=27.7, definition_version="v1", **common),
+        KpiRow(value=17.6, definition_version="v2", **common),
+    ]
+    assert upsert_rows(rows, db) == 2
+
+    con = duckdb.connect(str(db), read_only=True)
+    try:
+        (n,) = con.execute("SELECT COUNT(*) FROM kpi_panel").fetchone()
+    finally:
+        con.close()
+    assert n == 2

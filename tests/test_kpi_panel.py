@@ -40,9 +40,12 @@ def test_q3_2025_old_format_matches_anchors():
     assert rows["arpac"].value == pytest.approx(13.4)
     assert rows["net_income"].value == pytest.approx(782.7)
     assert rows["deposits"].value == pytest.approx(38.8)
-    # Credit metrics come from prose in the old format.
+    # Credit metrics come from prose in the old format -> original (v1) definition.
     assert rows["npl_15_90"].value == pytest.approx(4.2)
     assert rows["npl_15_90"].unit == "pct"
+    assert rows["npl_15_90"].definition_version == "v1"
+    assert rows["efficiency_ratio"].value == pytest.approx(27.7)
+    assert rows["efficiency_ratio"].definition_version == "v1"
     # Provenance is always populated.
     assert all(r.source_url for r in rows.values())
 
@@ -54,10 +57,15 @@ def test_q1_2026_new_format_and_quirks():
     assert rows["arpac"].value == pytest.approx(15.9)
     # Cost-to-serve is printed negative in the new layout; we store its magnitude.
     assert rows["cost_to_serve"].value == pytest.approx(1.0)
-    # Credit metrics are structured (not prose) in the new layout.
+    # Credit metrics are structured (not prose) in the new layout -> redefined (v2).
     assert rows["npl_15_90"].value == pytest.approx(5.0)
+    assert rows["npl_15_90"].definition_version == "v2"
     assert rows["npl_90_plus"].value == pytest.approx(6.5)
     assert rows["efficiency_ratio"].value == pytest.approx(17.6)
+    assert rows["efficiency_ratio"].definition_version == "v2"
+    # The new doc must NOT also emit a v1 prose value for the same quarter.
+    assert sum(1 for r in parse_release((FIXTURES / "nu_q1_2026_newfmt.htm").read_bytes(),
+                                        "u") if r.metric == "npl_15_90") == 1
 
 
 def test_fx_basis_assignment():

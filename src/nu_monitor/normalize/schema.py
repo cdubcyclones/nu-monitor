@@ -44,7 +44,13 @@ METRICS = (
 
 
 class KpiRow(BaseModel):
-    """One observation in the panel. ``source_url`` is mandatory provenance."""
+    """One observation in the panel. ``source_url`` is mandatory provenance.
+
+    ``definition_version`` distinguishes metrics whose definition changed over time
+    (e.g. NU's efficiency ratio and NPL were redefined in the Q4'25 reporting format).
+    Rows with the same (company, period_end, metric) but different versions are NOT the
+    same series and must not be charted together without a caveat.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -55,17 +61,19 @@ class KpiRow(BaseModel):
     unit: Unit
     source_url: str
     fx_basis: FxBasis = "n/a"
+    definition_version: str = "v1"
 
 
 KPI_PANEL_DDL = """
 CREATE TABLE IF NOT EXISTS kpi_panel (
-    company    TEXT    NOT NULL,
-    period_end DATE    NOT NULL,
-    metric     TEXT    NOT NULL,
-    value      DOUBLE  NOT NULL,
-    unit       TEXT    NOT NULL,
-    source_url TEXT    NOT NULL,
-    fx_basis   TEXT    NOT NULL DEFAULT 'n/a',
-    PRIMARY KEY (company, period_end, metric, fx_basis)
+    company            TEXT    NOT NULL,
+    period_end         DATE    NOT NULL,
+    metric             TEXT    NOT NULL,
+    value              DOUBLE  NOT NULL,
+    unit               TEXT    NOT NULL,
+    source_url         TEXT    NOT NULL,
+    fx_basis           TEXT    NOT NULL DEFAULT 'n/a',
+    definition_version TEXT    NOT NULL DEFAULT 'v1',
+    PRIMARY KEY (company, period_end, metric, definition_version)
 );
 """

@@ -39,11 +39,12 @@ def upsert_rows(rows: Iterable[KpiRow], db_path: Path | str | None = None) -> in
         con.executemany(
             """
             INSERT OR REPLACE INTO kpi_panel
-                (company, period_end, metric, value, unit, source_url, fx_basis)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (company, period_end, metric, value, unit, source_url, fx_basis, definition_version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
-                (r.company, r.period_end, r.metric, r.value, r.unit, r.source_url, r.fx_basis)
+                (r.company, r.period_end, r.metric, r.value, r.unit, r.source_url,
+                 r.fx_basis, r.definition_version)
                 for r in rows
             ],
         )

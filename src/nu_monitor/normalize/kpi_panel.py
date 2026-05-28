@@ -51,6 +51,7 @@ class MetricSpec:
     lo: float
     hi: float
     abs_value: bool = False  # NU flipped cost-to-serve to negative in the Q4'25 format
+    definition_version: str = "v1"
 
 
 # Structured metrics: read the first number after the label (current quarter, column 0).
@@ -76,13 +77,17 @@ OTHER_PERF_MARKER = "Summary of Consolidated Other Performance Metrics"
 # Credit / performance metrics: structured only in the Q4'25+ "Other Performance Metrics"
 # block (old layout carries these in prose -- see PROSE_SPECS). Searched ONLY within that
 # section so the "NPL 15-90" literal in old-format footnotes can't be misread.
+# These are the REDEFINED versions (v2): NPL dropped its "Brazil only" footnote and sits
+# under "Consolidated" metrics; the efficiency ratio was redefined (~27.7% -> ~17.6%).
 OTHER_PERF_SPECS: tuple[MetricSpec, ...] = (
-    MetricSpec("npl_15_90", "NPL 15-90", "pct", 0, 30),
-    MetricSpec("npl_90_plus", "NPL 90+", "pct", 0, 30),
-    MetricSpec("efficiency_ratio", "Efficiency-Ratio", "pct", 0, 100),
+    MetricSpec("npl_15_90", "NPL 15-90", "pct", 0, 30, definition_version="v2"),
+    MetricSpec("npl_90_plus", "NPL 90+", "pct", 0, 30, definition_version="v2"),
+    MetricSpec("efficiency_ratio", "Efficiency-Ratio", "pct", 0, 100, definition_version="v2"),
 )
 
-# Prose-only metrics: strict patterns, gaps allowed. Each value must be a decimal percent.
+# Prose-only metrics (OLD layout): strict patterns, gaps allowed; each value must be a
+# decimal percent. These are the ORIGINAL (v1) definitions -- NPL here is Brazil-only and
+# the efficiency ratio uses the pre-Q4'25 methodology.
 PROSE_SPECS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("npl_15_90", (
         r"15-90\s+NPL\s+ratio[^.]{0,140}?reached\s+([0-9]+\.[0-9])\s*%",
@@ -174,6 +179,7 @@ def _extract_specs(region: str, specs: tuple[MetricSpec, ...], period_end: dt.da
         rows.append(KpiRow(
             company="NU", period_end=period_end, metric=spec.metric,
             value=value, unit=spec.unit, source_url=source_url, fx_basis=fx_basis,
+            definition_version=spec.definition_version,
         ))
     return rows
 
@@ -199,7 +205,7 @@ def _extract_prose(plain: str, period_end: dt.date, source_url: str) -> list[Kpi
                 rows.append(KpiRow(
                     company="NU", period_end=period_end, metric=metric,
                     value=float(m.group(1)), unit="pct",
-                    source_url=source_url, fx_basis="n/a",
+                    source_url=source_url, fx_basis="n/a", definition_version="v1",
                 ))
                 break  # first matching phrasing wins; if none match -> gap
     return rows
@@ -209,7 +215,13 @@ def parse_release(raw: bytes, source_url: str) -> list[KpiRow]:
     """Parse one NU earnings release exhibit into KpiRows (current quarter only)."""
     plain = plain_text(raw)
     period_end = detect_current_quarter(plain)
-    return _extract_structured(plain, period_end, source_url) + _extract_prose(plain, period_end, source_url)
+    rows = _extract_structured(plain, period_end, source_url)
+    # Prose credit metrics are the OLD-layout fallback only. When the new structured
+    # "Other Performance Metrics" block exists, those (v2) values supersede prose, and
+    # running prose too would double-emit a different (v1) definition for the same quarter.
+    if OTHER_PERF_MARKER not in plain:
+        rows += _extract_prose(plain, period_end, source_url)
+    return rows
 
 
 def find_nu_release_docs(cik: str, *, max_quarters: int = 12) -> list[tuple[Filing, str]]:
@@ -241,11 +253,11 @@ def find_nu_release_docs(cik: str, *, max_quarters: int = 12) -> list[tuple[Fili
 def ingest_nu(cik: str, *, max_quarters: int = 12) -> list[KpiRow]:
     """Fetch + parse NU releases into KpiRows (does not write to DB)."""
     rows: list[KpiRow] = []
-    seen: set[tuple[str, dt.date]] = set()  # (metric, period_end) — first (newest) wins
+    seen: set[tuple[str, dt.date, str]] = set()  # (metric, period_end, version); newest wins
     for filing, url in find_nu_release_docs(cik, max_quarters=max_quarters):
         raw = fetch(url, cache_key=("docs", filing.primary_document))
         for row in parse_release(raw, url):
-            key = (row.metric, row.period_end)
+            key = (row.metric, row.period_end, row.definition_version)
             if key in seen:
                 continue
             seen.add(key)

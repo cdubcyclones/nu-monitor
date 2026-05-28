@@ -12,7 +12,21 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-Unit = Literal["usd_m", "brl_m", "usd", "brl", "count", "pct", "ratio"]
+# Units keep stored values faithful to the figure printed in the filing, so a value
+# can be hand-checked against the source without mental rescaling. e.g. "127.0" customers
+# is stored as 127.0 with unit count_m (millions), not 127_000_000.
+Unit = Literal[
+    "usd_m",    # US$ millions
+    "usd_b",    # US$ billions
+    "brl_m",    # R$ millions
+    "brl_b",    # R$ billions
+    "usd",      # US$ (per-customer figures)
+    "brl",      # R$
+    "count",    # absolute count
+    "count_m",  # millions of units (e.g. customers)
+    "pct",      # percent, stored as the printed number (4.2 means 4.2%)
+    "ratio",    # dimensionless ratio
+]
 FxBasis = Literal["reported", "fx_neutral", "n/a"]
 
 # Canonical metric names used across companies.

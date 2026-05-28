@@ -50,10 +50,17 @@ def _cache_path(category: str, name: str) -> Path:
     return d / name
 
 
-def fetch(url: str, *, cache_key: tuple[str, str] | None = None, force: bool = False) -> bytes:
+def fetch(
+    url: str,
+    *,
+    cache_key: tuple[str, str] | None = None,
+    force: bool = False,
+    max_retries: int = 4,
+) -> bytes:
     """GET a URL with SEC headers + throttling. Optionally cache bytes to data/raw/.
 
     cache_key = (category, filename). If cached and not force, returns cached bytes.
+    Retries on 429/503 (SEC throttles intermittently) with exponential backoff.
     """
     cached: Path | None = None
     if cache_key is not None:
@@ -61,13 +68,24 @@ def fetch(url: str, *, cache_key: tuple[str, str] | None = None, force: bool = F
         if cached.exists() and not force:
             return cached.read_bytes()
 
-    _throttle()
-    resp = httpx.get(url, headers=_headers(), timeout=30.0, follow_redirects=True)
-    resp.raise_for_status()
-    data = resp.content
-    if cached is not None:
-        cached.write_bytes(data)
-    return data
+    last_exc: Exception | None = None
+    for attempt in range(max_retries):
+        _throttle()
+        resp = httpx.get(url, headers=_headers(), timeout=30.0, follow_redirects=True)
+        if resp.status_code in (429, 503):
+            last_exc = httpx.HTTPStatusError(
+                f"{resp.status_code} for {url}", request=resp.request, response=resp
+            )
+            time.sleep(0.5 * (2**attempt))
+            continue
+        resp.raise_for_status()
+        data = resp.content
+        if cached is not None:
+            cached.write_bytes(data)
+        return data
+
+    assert last_exc is not None
+    raise last_exc
 
 
 def _accession_nodash(accession: str) -> str:

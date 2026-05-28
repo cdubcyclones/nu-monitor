@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+
+# Environment
+.env
+
+# Generated data (regenerable from APIs)
+data/nu.duckdb
+data/raw/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

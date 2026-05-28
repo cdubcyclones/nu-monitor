@@ -30,7 +30,7 @@ import datetime as dt
 import re
 from dataclasses import dataclass
 
-from ..ingest.edgar import Filing, fetch, list_filings
+from ..ingest.edgar import Filing, fetch, fetch_company_facts, list_filings
 from .schema import KpiRow
 
 OPERATING_MARKER = "Summary of Consolidated Operating Metrics"
@@ -262,4 +262,93 @@ def ingest_nu(cik: str, *, max_quarters: int = 12) -> list[KpiRow]:
                 continue
             seen.add(key)
             rows.append(row)
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# Peers (domestic issuers) -- XBRL company-facts path.
+#
+# Peers report US-GAAP XBRL; NU reports IFRS. We ingest ONLY metrics that are
+# genuinely comparable at a high level, and never force a peer value into a metric
+# whose definition we can't match to NU's (customers, ARPAC, NPL, efficiency are
+# deliberately NOT pulled for peers -- see docs/DATA_SOURCES.md). We use SEC calendar
+# "frames" (CYyyyyQq) for clean per-quarter values, and convert to NU's units.
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class PeerFact:
+    metric: str
+    tag: str        # us-gaap concept
+    unit: str       # target NU unit
+    instant: bool   # balance-sheet (instant) vs flow (duration) concept
+    divisor: float  # raw USD -> target unit
+
+
+# Per-company tag choices, verified against each filer's company-facts:
+#   SoFi total NET revenue = RevenuesNetOfInterestExpense (it's a bank; the contract-
+#     revenue tag captures only noninterest revenue). Block/PayPal use Revenues.
+#   Deposits only meaningful for SoFi (a chartered bank); excluded for Block/PayPal.
+PEER_FACTS: dict[str, tuple[str, tuple[PeerFact, ...]]] = {
+    "SOFI": ("0001818874", (
+        PeerFact("revenue", "RevenuesNetOfInterestExpense", "usd_m", False, 1e6),
+        PeerFact("net_income", "NetIncomeLoss", "usd_m", False, 1e6),
+        PeerFact("deposits", "Deposits", "usd_b", True, 1e9),
+    )),
+    "SQ": ("0001512673", (
+        PeerFact("revenue", "Revenues", "usd_m", False, 1e6),
+        PeerFact("net_income", "NetIncomeLoss", "usd_m", False, 1e6),
+    )),
+    "PYPL": ("0001633917", (
+        PeerFact("revenue", "Revenues", "usd_m", False, 1e6),
+        PeerFact("net_income", "NetIncomeLoss", "usd_m", False, 1e6),
+    )),
+}
+
+_FRAME_DURATION = re.compile(r"CY(\d{4})Q([1-4])")
+_FRAME_INSTANT = re.compile(r"CY(\d{4})Q([1-4])I")
+
+
+def _quarter_end(year: int, q: int) -> dt.date:
+    month, day = _Q_END[q]
+    return dt.date(year, month, day)
+
+
+def _peer_source_url(cik: str, accn: str) -> str:
+    """Folder of the specific 10-Q/10-K that reported the value (provenance)."""
+    return f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accn.replace('-', '')}/"
+
+
+def extract_peer_facts(facts: dict, cik: str, company: str, spec: PeerFact) -> list[KpiRow]:
+    node = facts.get("facts", {}).get("us-gaap", {}).get(spec.tag)
+    if not node:
+        return []
+    pat = _FRAME_INSTANT if spec.instant else _FRAME_DURATION
+    chosen: dict[dt.date, tuple[float, str]] = {}
+    for unit, entries in node.get("units", {}).items():
+        if unit != "USD":
+            continue
+        for e in entries:
+            frame = e.get("frame", "")
+            m = pat.fullmatch(frame)
+            if not m:
+                continue  # only SEC calendar-quarter frames -> clean, deduped quarters
+            period_end = _quarter_end(int(m.group(1)), int(m.group(2)))
+            chosen[period_end] = (e["val"], e.get("accn", ""))
+    rows: list[KpiRow] = []
+    for period_end, (val, accn) in sorted(chosen.items()):
+        rows.append(KpiRow(
+            company=company, period_end=period_end, metric=spec.metric,
+            value=round(val / spec.divisor, 1), unit=spec.unit,
+            source_url=_peer_source_url(cik, accn), fx_basis="reported",
+        ))
+    return rows
+
+
+def ingest_peers() -> list[KpiRow]:
+    """Fetch + normalize comparable peer metrics from XBRL company-facts."""
+    rows: list[KpiRow] = []
+    for company, (cik, specs) in PEER_FACTS.items():
+        facts = fetch_company_facts(cik)
+        for spec in specs:
+            rows += extract_peer_facts(facts, cik, company, spec)
     return rows

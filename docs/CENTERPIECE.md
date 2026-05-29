@@ -41,6 +41,16 @@ The deliverable is a *descriptive comparative read*, not a tested relationship. 
 "directional" or "predictive" language is out — see [FINDINGS § 1](FINDINGS.md#1-what-broke-and-why)
 for why.
 
+### What would falsify the centerpiece thesis (descriptive analogue of an out-of-sample test)
+
+The thesis is "NU traces a distinct arc through (scale, margin) space relative to peers."
+The boring/null version of Chart 3 — the result that would *not* support the thesis and
+that the README narrative would have to acknowledge — is: **NU's path overlaps a peer's
+path at the same revenue scale rather than tracing a separately-shaped arc**, e.g. NU's
+recent points sit in the same neighborhood that SoFi (or early-stage PayPal / Block)
+occupied at NU's current scale. If Chart 3 looks like that, the analytical narrative
+becomes "NU is on a path the cohort has already traveled," not "NU is distinctive."
+
 ---
 
 ## 2. The charts that answer it (4)
@@ -53,10 +63,12 @@ Each chart is fixed below. Metrics referenced are exact `kpi_panel.metric` value
   Q4'21 → Q1'26. Log y-axis so the four-companies-at-different-scales fit on one panel.
   Q4'22 hole in NU's line annotated, not interpolated.
 - **From:** `kpi_panel` rows `metric='revenue'`, `definition_version='v1'`.
-- **Reader concludes:** NU is the cohort's fastest grower over the window; it surpassed
-  SoFi's revenue mid-window and is approaching the order of magnitude of Block and
-  PayPal. A revenue line for NU is a *growth* story; the other three are *maturity*
-  stories at different scales.
+- **The chart asks (do not pre-bake the answer):** does NU's revenue growth rate exceed
+  peers' and by how much (compute CAGRs from the panel); has NU's quarterly revenue
+  crossed SoFi's during the window, and when; how far is NU from Block/PayPal's
+  order of magnitude at the last reported quarter. Compute the answers and put them
+  in the README narrative with values; the chart shows the lines, the README states the
+  numbers.
 - **Required caveat in caption:** "Revenue definitions are not strictly identical — IFRS
   (NU) vs US-GAAP (peers); SoFi reports net of interest expense; Block includes Bitcoin
   pass-through. Read for scale and slope, not precise levels."
@@ -66,9 +78,10 @@ Each chart is fixed below. Metrics referenced are exact `kpi_panel.metric` value
 - **Shows:** `net_income / revenue × 100` per quarter, four lines. Same window.
 - **From:** `kpi_panel` rows `metric IN ('revenue','net_income')`, `definition_version='v1'`,
   joined per `(company, period_end)`.
-- **Reader concludes:** profitability emerged at different stages of the cohort. NU's
-  margin improvement is the steepest and most monotonic; SoFi is just crossing into
-  meaningful positive margin; PayPal's margin sits in a mature band; Block's is volatile.
+- **The chart asks (do not pre-bake the answer):** when each company crossed into
+  positive net margin; the slope of margin expansion for each (compute the
+  first-to-last-quarter margin delta per company and put the numbers in the README);
+  where each company sits on Q1'26 closing margin.
 - **Required caveat:** "Cross-GAAP and cross-presentation differences in the numerator
   and denominator persist (see Chart 1); a margin level is not strictly comparable
   across companies, but the *trajectory* and *direction* are robust."
@@ -76,17 +89,25 @@ Each chart is fixed below. Metrics referenced are exact `kpi_panel.metric` value
 ### Chart 3 — The frontier (revenue-vs-margin scatter with paths)
 
 - **Shows:** each company's quarterly observations plotted as points in `(revenue_$M,
-  net_margin_%)` space, log-x; consecutive quarters within a company connected to form
-  a "path through the frontier"; each company's most-recent quarter marked as a larger
+  net_margin_%)` space; consecutive quarters within a company connected to form a
+  "path through the frontier"; each company's most-recent quarter marked as a larger
   dot.
 - **From:** same data as Charts 1+2; one row per `(company, period_end)`.
-- **Reader concludes:** NU is on a distinctive convex path from the loss/small-revenue
-  corner toward the high-margin/larger-scale region — the cleanest trajectory in the
-  cohort. SoFi traces a similar early-stage shape at a fraction of the scale; PayPal
-  sits in a mature plateau; Block oscillates. NU's *position on the frontier* is what
-  the project is fundamentally claiming is interesting.
-- **This chart is the centerpiece-within-the-centerpiece.** If only one image gets
-  remembered from the project, it should be this one.
+- **Visual-feasibility plan (decided here, not at the easel):** the cohort spans roughly
+  $0.6B → $8B+ in quarterly revenue and roughly −50 % → +25 % in net margin, so NU's
+  arc will be long and the mature peers' paths will be small clusters.
+  - **Primary rendering:** single chart with **log-scale x-axis** (revenue, $M) and
+    **linear y-axis** (net margin, %), four colored paths with arrow-marked direction
+    of travel and the most-recent quarter shown as a larger labeled dot per company.
+    Log-x is what compresses NU's range and lets all four paths share one panel.
+  - **Fallback (used only if the single panel doesn't read clearly at the end of the
+    build):** small-multiples — one panel per company on shared log-x and shared linear-y
+    axes so the four paths can be compared side-by-side at identical scales without
+    overlapping. The decision to fall back is recorded in the README if it happens.
+- **The chart asks (do not pre-bake the answer):** does NU's path through (scale, margin)
+  space have a distinct shape from peers' paths, or do paths overlap at the same revenue
+  scale (the falsification case stated in § 1). The reader should be able to look and
+  say yes/no; the README narrative will say which.
 
 ### Chart 4 — Deposits: NU vs SoFi (the cohort's only deposit-funded peers)
 
@@ -95,10 +116,11 @@ Each chart is fixed below. Metrics referenced are exact `kpi_panel.metric` value
   customer-deposit balance ([DATA_SOURCES](DATA_SOURCES.md)).
 - **From:** `kpi_panel` rows `metric='deposits'`, `company IN ('NU','SOFI')`,
   `definition_version='v1'`.
-- **Reader concludes:** the deposit-funded digital-banking model is shared by NU and
-  SoFi; NU operates at roughly ~5× SoFi's deposit scale and both grow deposits at high
-  rates. This is the cleanest like-for-like in the panel and supports the frontier
-  read for the two genuinely comparable institutions.
+- **The chart asks (do not pre-bake the answer):** what is the actual deposit-scale
+  ratio between NU and SoFi at Q1'26 (compute it; my earlier off-the-cuff "~5×" turned
+  out to be the *revenue* ratio, not deposits — a small but instructive reminder not to
+  pattern-match here); how do the two deposit-growth rates compare. README states the
+  values.
 - **Required caveat:** "Deposits are a directly comparable balance-sheet line; Block
   and PayPal lack a meaningful customer-deposit equivalent and are correctly excluded."
 

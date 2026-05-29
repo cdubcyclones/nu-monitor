@@ -159,6 +159,45 @@ using SEC calendar-quarter **frames** (`CY{yyyy}Q{q}`) for clean quarterly value
 
 Units are normalized to match NU: `revenue`/`net_income` in `usd_m`, `deposits` in `usd_b`.
 
+### Block (SQ) — net income values verified, plus two structural notes
+
+A reviewer raised a sanity-check concern that Block's panel margin "−2.9 % → −5.1 %"
+looked implausible given Block's recent profitable quarters. After spot-checking:
+
+- **The XBRL tag is correct.** `NetIncomeLoss` (the tag we ingest) matches the other
+  net-income variants for Block to the cent — `NetIncomeLossAttributableToParentDiluted`
+  and `NetIncomeLossAvailableToCommonStockholders*` all return the same values at the
+  spot-check frames; non-controlling-interest is immaterial ($0.1 M).
+- **The values match the filings.** Block's Q3'25 GAAP net income was **$461.6 M** per
+  the earnings release / 10-Q (panel has $461.5 M — rounding only). Block's Q1'26 GAAP
+  net loss was **$308.7 M** per the earnings release / 10-Q (panel matches exactly).
+  Block's Q1'26 loss was driven by **~$908 M of identified one-time charges**
+  (Workforce Plan restructuring $495.3 M + Bitcoin investment remeasurement $172.8 M
+  + DOJ reserve $240 M); adjusted EBITDA was a record $1.0 B. The GAAP loss is real but
+  not a trend signal.
+- **First-quarter / last-quarter margin delta is a meaningful summary only for
+  monotonic trajectories** (NU, SoFi, PayPal). Block is volatile (13 net-positive of 34
+  panel quarters; 6 of the 7 most recent quarters net-positive before Q1'26's one-time
+  hit). The bookends do not describe the path. The README narrative reports Block
+  differently for this reason.
+
+#### XBRL calendar-frame extraction does not capture Q4 quarterly observations
+
+The SEC `frames` we filter on (`CY{yyyy}Q1..Q4`) are designed for filer-reported
+calendar-quarter values. In practice, **Q4 standalone is often NOT tagged with a
+`CY{yyyy}Q4` frame** because filers report Q4 only inside the 10-K as the FY-minus-9M
+residual. The peer panels therefore skip Q4 observations:
+
+- SQ (Block) panel: 27 of ~36 expected quarters (~9 Q4s missing; one ingest spans 2015-Q1
+  through 2026-Q1).
+- PYPL panel: 24 of ~29 expected (~5 Q4s missing).
+- SOFI panel: 18 of ~24 expected (~6 Q4s missing).
+
+NU is **not** affected (the IFRS backfill recovers Q4 quarterly figures via the
+documented FY − 9M derivation; see Q4 derivation above). This is a documented coverage
+gap, not a parse error, and recovering peer Q4s would require parsing each peer's 10-K
+income statement HTML directly — out of v1 scope.
+
 ## Brazil macro layer (`company='BR_MACRO'`) — minimal by design
 
 Two BCB SGS series only, both verified against the SGS catalog. This panel is here for

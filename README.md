@@ -46,6 +46,16 @@ from `kpi_panel` rows with `definition_version='v1'`, joined per `(company, peri
 Each company's window is its own full panel range; CAGRs are over that window, not a
 common window — the goal is to characterize the path each company actually traced.
 
+> **Cohort comparability — this is a useful comparison set, not a like-for-like peer
+> group.** Block's revenue mix includes a large, very thin-margin Bitcoin pass-through
+> (`Revenues` in XBRL is gross of Bitcoin cost of revenue), PayPal is a mature payments
+> network at a different lifecycle stage, SoFi's revenue tag is `RevenuesNetOfInterestExpense`
+> (net of interest, by US-GAAP convention for banks), and NU reports in IFRS. The cohort
+> is informative for *scale, slope, and trajectory shape*; precise level-on-level
+> comparisons should be read against [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md). The
+> peer panel also omits Q4 observations (XBRL calendar-frame quirk; documented), so
+> Chart 2's peer lines have small Q4 gaps that NU's IFRS-backfilled line does not.
+
 ### Chart 1 — Revenue scale & trajectory
 
 | Company | Window | Revenue, first → last | Quarterly revenue CAGR |
@@ -66,17 +76,18 @@ Caveat carried in the chart caption: revenue definitions are **not strictly iden
 
 ### Chart 2 — Net margin trajectory
 
-| Company | First profitable quarter | Margin, first → last (full quarters w/ NI) | Δ (pp) |
-|---|---|---|---:|
-| **NU** | Q3'22 | **0.6 % (Q3'22) → 17.5 % (Q1'26)** | **+16.9 pp** over 3.5 y |
-| SOFI | Q2'20 | 6.8 % (Q2'20) → 15.1 % (Q1'26) | +8.4 pp over 5.75 y |
-| SQ | Q3'18 | −2.9 % (Q2'17) → −5.1 % (Q1'26) | −2.2 pp over 8.75 y |
-| PYPL | Q1'19 | 16.2 % (Q1'19) → 13.3 % (Q1'26) | −2.8 pp over 7 y |
+| Company | First profitable qtr | Margin trajectory summary |
+|---|---|---|
+| **NU** | Q3'22 | Monotonic expansion: **0.6 % (Q3'22) → 17.5 % (Q1'26), +16.9 pp over 3.5 y** |
+| SOFI | Q2'20 | Mostly monotonic: 6.8 % (Q2'20) → 15.1 % (Q1'26), +8.4 pp over 5.75 y |
+| SQ | Q3'18 | **Volatile around zero, net-positive recently.** 13 / 34 panel quarters net-positive; 6 of the 7 most recent (Q1'24–Q3'25) net-positive; Q1'26 = a GAAP loss of −5.1 % driven by ~$908 M of identified one-time charges (Workforce Plan restructuring, Bitcoin remeasurement, DOJ reserve), adjusted EBITDA a record $1 B. First-to-last delta is **not representative** of trajectory; see Chart 2 line. |
+| PYPL | Q1'19 | Mature plateau, slight drift: 16.2 % (Q1'19) → 13.3 % (Q1'26), −2.8 pp over 7 y |
 
-**NU posted the largest margin expansion of the four**, going from barely-profitable in
-Q3'22 to ~17.5 % net margin at Q1'26 — already in the same band as mature PayPal.
-SoFi expanded ~half as much (+8.4 pp); PayPal's margin has drifted down from its
-2019 starting level; Block's margin trajectory is volatile and ends below zero.
+**NU posted the largest sustained margin expansion of the four**, going from
+barely-profitable in Q3'22 to ~17.5 % net margin at Q1'26 — already in the same band as
+mature PayPal. SoFi expanded ~half as much (+8.4 pp). PayPal's margin has drifted down
+slightly from its 2019 starting level. Block's series is too volatile for a clean
+first-to-last summary; the chart line is the honest representation.
 
 ### Chart 3 — The frontier (scale × margin)
 
@@ -88,9 +99,15 @@ $5–6 B revenue.
 
 **The four paths visibly differ in starting position, slope, and direction.** The
 falsification case stated in CENTERPIECE.md § 1 — "NU's path overlaps a peer's at the
-same revenue scale rather than tracing a separately-shaped arc" — does *not* obtain on
-this panel: at NU's current revenue scale (~$5 B), only Block is in the same x-range,
-and Block sits at a near-zero / negative margin region NU passed through years ago.
+same revenue scale rather than tracing a separately-shaped arc" — does not appear to
+obtain: NU's trajectory from (≈$1.3 B, 0.6 %) in Q3'22 to (≈$5 B, 17.5 %) in Q1'26 is
+distinct in slope from SoFi's smaller-scale early-profit cluster and from PayPal's
+mature plateau. The cohort-comparability caveat above is binding here: Block sits in
+the same x-range as recent-NU but **Block's near-zero margin is a function of its
+revenue mix (Bitcoin pass-through gross-up), not evidence that NU is on a distinct
+arc**, so we do not lean on the NU-vs-Block contrast to support the thesis. The thesis
+rests on NU's distinctive trajectory shape against SoFi and PayPal; Chart 2 is the
+weight-bearing visual, Chart 3 illustrates the (scale, margin) position.
 
 (Primary rendering: single log-x panel. Small-multiples fallback is the documented
 backup if the single panel ever stops reading clearly.)

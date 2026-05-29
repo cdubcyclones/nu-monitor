@@ -301,6 +301,12 @@ st.markdown(
 # Tail: computed numerical claims (also shown in the README narrative)
 # ---------------------------------------------------------------------------
 with st.expander("Numerical claims used in the README narrative (computed from this panel)"):
+    st.caption(
+        "`margin_first_pct` / `margin_last_pct` / `margin_delta_pp` are bookend values, "
+        "meaningful for monotonic trajectories (NU, SOFI, PYPL on this panel). For volatile "
+        "series — Block here — the bookends do not characterize the path; read Chart 2's "
+        "line and the SQ subsection in docs/DATA_SOURCES.md."
+    )
     snaps = cohort_snapshots()
     st.write({
         s.company: {

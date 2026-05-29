@@ -169,8 +169,8 @@ analytical relationship — sample size on NU's side is too small for that; see
 
 | Metric (`metric=…`) | SGS code | Catalog | Native frequency | Recent value |
 |---|---|---|---|---|
-| `selic_target` | **432** | [Taxa de juros - Meta Selic definida pelo Copom](https://dadosabertos.bcb.gov.br/dataset/432-taxa-de-juros---meta-selic-definida-pelo-copom) — % p.a. | daily | 14.50 % (post-Apr-29-2026 Copom cut); 14.75 % at Q1'26 close |
-| `household_default` | **21084** | [Inadimplência da carteira de crédito - Pessoas físicas - Total](https://dadosabertos.bcb.gov.br/dataset/21084-inadimplencia-da-carteira-de-credito---pessoas-fisicas---total) — % of PF credit portfolio ≥ 90 days delinquent | monthly | 5.37 % (Apr 2026); 5.26 % at Mar 2026 |
+| `selic_target` | **432** | [Taxa de juros - Meta Selic definida pelo Copom](https://dadosabertos.bcb.gov.br/dataset/432-taxa-de-juros---meta-selic-definida-pelo-copom) — % p.a. | daily | 14.75 % at Mar 31, 2026 close (Q1'26 quarter-end); subsequently cut to 14.50 % at the Apr 29, 2026 Copom meeting |
+| `household_default` | **21084** | [Inadimplência da carteira de crédito - Pessoas físicas - Total](https://dadosabertos.bcb.gov.br/dataset/21084-inadimplencia-da-carteira-de-credito---pessoas-fisicas---total) — % of PF credit portfolio ≥ 90 days delinquent | monthly | 5.26 % at Mar 31, 2026 (Q1'26 quarter-end reading); 5.37 % at the more recent Apr 2026 reading |
 
 **Quarterly alignment convention** (end-of-quarter; chosen for both, consistently):
 - `selic_target` (daily) — the **last observation on or before the quarter-end date**

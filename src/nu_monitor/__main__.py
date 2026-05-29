@@ -4,7 +4,8 @@
   python -m nu_monitor ingest-nu        # parse NU 6-K earnings releases (operating + KPIs)
   python -m nu_monitor ingest-nu-fin    # backfill NU revenue/net_income/deposits from IFRS
   python -m nu_monitor ingest-peers     # normalize peer XBRL into kpi_panel
-  python -m nu_monitor ingest-all       # NU releases -> NU IFRS backfill -> peers
+  python -m nu_monitor ingest-br-macro  # BCB SGS Selic + household default (BR_MACRO)
+  python -m nu_monitor ingest-all       # NU releases -> NU IFRS backfill -> peers -> BR_MACRO
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import argparse
 
 from .config import DB_PATH, NU_CIK
 from .db import init_db, upsert_rows
+from .ingest.bcb import ingest_br_macro
 from .normalize.kpi_panel import ingest_nu, ingest_peers
 from .normalize.nu_financials import ingest_nu_financials
 
@@ -32,7 +34,8 @@ def main(argv: list[str] | None = None) -> int:
         "command",
         nargs="?",
         default="init",
-        choices=["init", "ingest-nu", "ingest-nu-fin", "ingest-peers", "ingest-all"],
+        choices=["init", "ingest-nu", "ingest-nu-fin", "ingest-peers", "ingest-br-macro",
+                 "ingest-all"],
         help="init (default): create the store; ingest-*: load KPIs",
     )
     parser.add_argument("--max-quarters", type=int, default=12,
@@ -54,6 +57,8 @@ def main(argv: list[str] | None = None) -> int:
         _load(ingest_nu_financials(NU_CIK), "NU IFRS")
     if args.command in ("ingest-peers", "ingest-all"):
         _load(ingest_peers(), "peer")
+    if args.command in ("ingest-br-macro", "ingest-all"):
+        _load(ingest_br_macro(), "BR_MACRO")
     return 0
 
 

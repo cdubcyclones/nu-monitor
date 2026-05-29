@@ -11,8 +11,7 @@ from, how often it refreshes, and the traps that bite anyone who trusts the data
 | SEC EDGAR archives | NU 6-K release exhibits (HTML) | `https://www.sec.gov/Archives/edgar/data/{cik}/{accession}/{doc}` | quarterly | UA header |
 | SEC EDGAR company-facts | Peer XBRL (SoFi/Block/PayPal) | `https://data.sec.gov/api/xbrl/companyfacts/CIK{cik10}.json` | quarterly (10-Q/10-K) | UA header |
 | SEC company tickers | ticker → CIK resolution | `https://www.sec.gov/files/company_tickers.json` | rarely | UA header |
-| BCB SGS *(Phase 2)* | Brazil macro (Selic, household credit/default) | `https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados?formato=json` | monthly | none |
-| IBGE SIDRA *(Phase 2)* | unemployment (PNAD), inflation (IPCA) | `https://apisidra.ibge.gov.br/values/...` | monthly | none |
+| BCB SGS | Brazil macro: Selic target + PF default | `https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados?formato=json&dataInicial=01/01/2021` | daily / monthly | none |
 | Apple App Store RSS *(Phase 3)* | pt-BR review sentiment signal | `https://itunes.apple.com/br/rss/customerreviews/id={appId}/json` | continuous | none |
 
 ### SEC gotchas (all sources)
@@ -159,3 +158,32 @@ using SEC calendar-quarter **frames** (`CY{yyyy}Q{q}`) for clean quarterly value
 | `arpac`, `npl_*`, `efficiency_ratio`, `cost_to_serve` | **excluded for peers** | NU-specific or comparison-unsafe; no comparable peer definition. |
 
 Units are normalized to match NU: `revenue`/`net_income` in `usd_m`, `deposits` in `usd_b`.
+
+## Brazil macro layer (`company='BR_MACRO'`) — minimal by design
+
+Two BCB SGS series only, both verified against the SGS catalog. This panel is here for
+the **geographic-judgment narrative** (Nu is ~92 % Brazilian, so any "fundamentals
+monitor" without a Brazil-context glance would be a tell). It is **not** a tested
+analytical relationship — sample size on NU's side is too small for that; see
+[FINDINGS.md](FINDINGS.md).
+
+| Metric (`metric=…`) | SGS code | Catalog | Native frequency | Recent value |
+|---|---|---|---|---|
+| `selic_target` | **432** | [Taxa de juros - Meta Selic definida pelo Copom](https://dadosabertos.bcb.gov.br/dataset/432-taxa-de-juros---meta-selic-definida-pelo-copom) — % p.a. | daily | 14.50 % (post-Apr-29-2026 Copom cut); 14.75 % at Q1'26 close |
+| `household_default` | **21084** | [Inadimplência da carteira de crédito - Pessoas físicas - Total](https://dadosabertos.bcb.gov.br/dataset/21084-inadimplencia-da-carteira-de-credito---pessoas-fisicas---total) — % of PF credit portfolio ≥ 90 days delinquent | monthly | 5.37 % (Apr 2026); 5.26 % at Mar 2026 |
+
+**Quarterly alignment convention** (end-of-quarter; chosen for both, consistently):
+- `selic_target` (daily) — the **last observation on or before the quarter-end date**
+  (e.g. Q1'26 → the Mar 31 value).
+- `household_default` (monthly) — the **observation reported for the quarter's last
+  month** (Q1 → Mar reading, Q2 → Jun, Q3 → Sep, Q4 → Dec).
+
+A monthly value missing for an open quarter (e.g. Q2'26 today) leaves a gap rather
+than emitting a guess. Provenance: every row's `source_url` is the series's BCB
+dataset catalog page.
+
+### What is deliberately NOT here (scope lock)
+
+IBGE / IPCA / unemployment / real-FX / household credit balance / any third series.
+Phase 2 was scope-locked to exactly these two series; adding more requires an explicit
+decision (and a reason that survives "what observable target would actually use it?").

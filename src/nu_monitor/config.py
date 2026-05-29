@@ -61,15 +61,18 @@ PEERS: dict[str, str] = {
     "PYPL": "PYPL",  # PayPal Holdings
 }
 
-# --- Banco Central do Brasil (BCB) SGS -- Phase 2 --------------------------
+# --- Banco Central do Brasil (BCB) SGS -- Phase 2 (minimal) ----------------
+# Two series only -- verified against the SGS catalog. See ingest/bcb.py and
+# docs/DATA_SOURCES.md for definitions and catalog URLs.
 BCB_SGS_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados?formato=json"
-# VERIFY each code in the SGS catalog before use (Phase 2). Left empty on purpose.
-BCB_SERIES: dict[str, int] = {}
+BCB_SERIES: dict[str, int] = {
+    "selic_target": 432,        # Meta Selic, daily, % p.a.
+    "household_default": 21084, # Inadimplencia PF Total, monthly, %
+}
 
-# --- IBGE SIDRA -- Phase 2 -------------------------------------------------
-IBGE_SIDRA_URL = "https://apisidra.ibge.gov.br/values/{query}"
-# VERIFY each table id before use (Phase 2). Left empty on purpose.
-IBGE_TABLES: dict[str, str] = {}
+# --- IBGE SIDRA -- INTENTIONALLY OUT OF SCOPE for v1 -----------------------
+# Phase 2 was scope-locked to just BCB SGS Selic + household default. Do not add
+# IBGE / IPCA / unemployment without an explicit decision -- see FINDINGS.md.
 
 # --- Apple App Store RSS (optional signal) -- Phase 3 ----------------------
 APPLE_REVIEWS_URL = "https://itunes.apple.com/br/rss/customerreviews/id={app_id}/json"

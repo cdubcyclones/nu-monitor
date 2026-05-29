@@ -47,7 +47,7 @@ source quotes live in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md); the short ve
 
 - [x] Phase 0 — scaffold + schema
 - [x] Phase 1 — EDGAR ingestion + KPI panel (NU 6-K parse + IFRS backfill + peer XBRL)
-- [ ] Phase 2 — Brazil macro layer (Selic + household default, BCB SGS only — minimal)
+- [x] Phase 2 — Brazil macro layer (Selic + PF household default, BCB SGS only — minimal context overlay)
 - [ ] Phase 3 — centerpiece analysis (TBD; see [docs/FINDINGS.md](docs/FINDINGS.md))
 - [ ] Phase 4 — Streamlit dashboard
 - [ ] Phase 5 — docs & packaging

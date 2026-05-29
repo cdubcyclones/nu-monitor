@@ -38,6 +38,55 @@ release as one flat string. So:
   acceptable; a guessed one is not. This is why NU's series are non-contiguous
   (parseable: 2021–22 and Q2'25→present; image-only: ≈Q4'22–Q1'25).
 
+## NU IFRS financial-statement backfill (`nufs*.htm`)
+
+NU's interim and annual *financial-statement* exhibits (`nufs1q*` / `nufs2q*` / `nufs3q*` /
+`nufs4q*`) DO render as real HTML tables, so they parse cleanly without OCR or guessing.
+We use this path to extend NU's `revenue`, `net_income`, and `deposits` series to ~18
+contiguous quarters (Q4'21 → Q1'26, with one documented hole at Q4'22). Operating metrics
+(customers, ARPAC, NPL, cost-to-serve, efficiency) are NOT in the IFRS statements and are
+never backfilled from anywhere — they stay gapped as the earnings releases left them.
+
+Wrinkles encountered (and how the parser handles them):
+
+- **Header label drift.** The "Three-month period ended" header text is present only in
+  some quarters (Q2/Q3 interims, mid-period); Q1 interims and the newest Q1'26 just show
+  bare dates above the value columns. We classify each value column by what its own
+  header cells contain (period label + date + year), not by a fixed column index.
+- **Bottom-line label drift.** The net-income / profit line varies across quarters:
+  `Net income for the period`, `Net income for the year`, `Profit (loss) for the period`,
+  `Profit for the period` (note: no "(loss)" in some 2024 docs), `Loss for the year`
+  (FY2021), and `Profit (loss) for the three-month period` (Q1'23). Matched by regex.
+- **Q4 exhibits are ANNUAL.** `nufs4q*` carries the full-year income statement, not a
+  Q4-standalone column. We derive **Q4 = full-year − nine-month** (exact subtraction of
+  two reported figures), pairing each `nufs4q{YY}` with the same year's `nufs3q{YY}`
+  nine-month column. Cross-checked against the Q4'25 earnings-release net income — the
+  derived value matched exactly (894.8 ✓), which validates the method.
+  Q4'21 cannot be derived (no Q3'21 interim 6-K exists), so Q4'21 revenue/net_income come
+  only from the earnings release; Q4'21 deposits come from the `nufs4q21` balance sheet.
+- **Annual balance sheets use YEAR columns** (e.g. `2025`) rather than `MM/DD/YYYY`. The
+  deposits-column selector accepts either, treating a year column as Dec 31 of that year.
+- **`nufs4q22` is not actually a financial-statements exhibit** — it contains no revenue,
+  net-income, or deposits lines. NU filed the audited FY2022 figures in the 20-F instead.
+  Parsing the 20-F is out of scope for v1, so **Q4'22 is the one remaining hole** in the
+  otherwise contiguous Q4'21→Q1'26 series. We skip docs that lack statement markers
+  (silently); we still fail loud if a doc that HAS the markers is structurally unparseable.
+- **Statements are in US$ thousands.** Converted to NU units: `revenue`/`net_income` →
+  `usd_m` (÷1,000); `deposits` → `usd_b` (÷1,000,000).
+
+### Managerial vs statutory revenue (Q4'25+) — comparison-safe choice
+
+NU's new-format earnings release (Q4'25 onward) introduces a *"Managerial P&L"* whose
+`Total Revenue` differs from the statutory IFRS `Total revenue` by ~+3.5 % (Q4'25:
+managerial 4,857.3 vs statutory IFRS 4,685.9 $M). **Net income is identical** under both
+presentations, so the difference is a reclassification (likely interest gross-up), not a
+bottom-line change.
+
+The pipeline runs `ingest-nu` (releases) → `ingest-nu-fin` (IFRS) → `ingest-peers` so
+the IFRS statutory figures **overwrite** the release values for overlapping new-format
+quarters. The stored `revenue` series is therefore uniformly statutory IFRS across all
+quarters, which is also more comparable to peers' US-GAAP top lines.
+
 ## Known discontinuities — READ BEFORE COMPARING
 
 NU changed its reporting format in **Q4'25** (filed 2026-02-25). Several metrics are not

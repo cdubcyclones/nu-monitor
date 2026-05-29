@@ -1,9 +1,10 @@
 """CLI entrypoint.
 
-  python -m nu_monitor init           # create data/nu.duckdb with the kpi_panel schema
-  python -m nu_monitor ingest-nu      # fetch + parse NU 6-K releases into kpi_panel
-  python -m nu_monitor ingest-peers   # fetch + normalize peer XBRL into kpi_panel
-  python -m nu_monitor ingest-all     # NU + peers
+  python -m nu_monitor init             # create data/nu.duckdb with the kpi_panel schema
+  python -m nu_monitor ingest-nu        # parse NU 6-K earnings releases (operating + KPIs)
+  python -m nu_monitor ingest-nu-fin    # backfill NU revenue/net_income/deposits from IFRS
+  python -m nu_monitor ingest-peers     # normalize peer XBRL into kpi_panel
+  python -m nu_monitor ingest-all       # NU releases -> NU IFRS backfill -> peers
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import argparse
 from .config import DB_PATH, NU_CIK
 from .db import init_db, upsert_rows
 from .normalize.kpi_panel import ingest_nu, ingest_peers
+from .normalize.nu_financials import ingest_nu_financials
 
 
 def _load(rows, label: str) -> None:
@@ -30,7 +32,7 @@ def main(argv: list[str] | None = None) -> int:
         "command",
         nargs="?",
         default="init",
-        choices=["init", "ingest-nu", "ingest-peers", "ingest-all"],
+        choices=["init", "ingest-nu", "ingest-nu-fin", "ingest-peers", "ingest-all"],
         help="init (default): create the store; ingest-*: load KPIs",
     )
     parser.add_argument("--max-quarters", type=int, default=12,
@@ -43,8 +45,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     init_db()
+    # Order matters: NU IFRS backfill runs after the releases so statutory
+    # revenue/net_income/deposits supersede the release figures (the new-format release
+    # reports a *managerial* revenue that differs from statutory IFRS).
     if args.command in ("ingest-nu", "ingest-all"):
-        _load(ingest_nu(NU_CIK, max_quarters=args.max_quarters), "NU")
+        _load(ingest_nu(NU_CIK, max_quarters=args.max_quarters), "NU release")
+    if args.command in ("ingest-nu-fin", "ingest-all"):
+        _load(ingest_nu_financials(NU_CIK), "NU IFRS")
     if args.command in ("ingest-peers", "ingest-all"):
         _load(ingest_peers(), "peer")
     return 0

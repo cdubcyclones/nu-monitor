@@ -19,11 +19,10 @@ data:
 - **Target side — too few observations.** Net-adds needs *consecutive* quarters. NU's
   customer series has exactly two contiguous runs: `{Q4'21, Q1'22, Q2'22}` and
   `{Q2'25, Q3'25, Q4'25, Q1'26}`. That is **2 + 3 = 5 net-add differences**, in two disjoint
-  windows. The gap between them (≈Q4'22–Q1'25) exists because NU published those earnings
-  releases as **slide images with no machine-readable text** (e.g. `nupr1q25_6k.htm`: 26 KB
-  of `<img>` tags, ~1.3 KB of boilerplate, zero "Customers"). Per project policy we do not
-  OCR or estimate them — a missing number beats a wrong one. So the gap is permanent with
-  free data.
+  windows. The gap between them (≈Q4'22–Q1'25) is the operating-metrics image-only gap
+  documented in DATA_SOURCES.md; Q4'22 specifically is the one fully unfillable quarter
+  ([DATA_SOURCES § Q4'22](DATA_SOURCES.md#q422--the-one-unfillable-hole)). Per project
+  policy we do not OCR or estimate. So the gap is permanent with free data.
 
 - **Signal side — no usable history (the real killer).** The Apple App Store RSS feed
   returns only the *most recent* reviews (~500, ~10 pages). For an app as busy as Nubank

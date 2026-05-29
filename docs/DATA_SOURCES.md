@@ -66,13 +66,29 @@ Wrinkles encountered (and how the parser handles them):
   only from the earnings release; Q4'21 deposits come from the `nufs4q21` balance sheet.
 - **Annual balance sheets use YEAR columns** (e.g. `2025`) rather than `MM/DD/YYYY`. The
   deposits-column selector accepts either, treating a year column as Dec 31 of that year.
-- **`nufs4q22` is not actually a financial-statements exhibit** — it contains no revenue,
-  net-income, or deposits lines. NU filed the audited FY2022 figures in the 20-F instead.
-  Parsing the 20-F is out of scope for v1, so **Q4'22 is the one remaining hole** in the
-  otherwise contiguous Q4'21→Q1'26 series. We skip docs that lack statement markers
-  (silently); we still fail loud if a doc that HAS the markers is structurally unparseable.
+- **Marker-less docs are skipped** (silently); we still fail loud if a doc that HAS the
+  markers is structurally unparseable. The notable skipped doc is `nufs4q22` — see
+  [Q4'22 — the one unfillable hole](#q422--the-one-unfillable-hole).
 - **Statements are in US$ thousands.** Converted to NU units: `revenue`/`net_income` →
   `usd_m` (÷1,000); `deposits` → `usd_b` (÷1,000,000).
+
+### Q4'22 — the one unfillable hole
+
+Q4'22 is the only quarter in the Q4'21→Q1'26 range where we cannot recover any of the
+headline metrics, because **both** machine-readable paths fail for that single quarter:
+
+1. The Q4'22 earnings release (`nupr4q22_6k.htm`, filed 2023-02-14) is published as slide
+   images with no hidden machine-readable text block. The operating metrics — customers,
+   ARPAC, NPL, etc. — are only in the JPGs.
+2. The Q4'22 financial-statements exhibit (`nufs4q22_6k.htm`) is not actually a
+   financial-statements exhibit at all — it contains no revenue / net-income / deposits /
+   liabilities lines. NU filed the audited FY2022 figures in the **20-F annual report**,
+   which is a different form type and out of scope for v1.
+
+Per project policy we do not OCR or estimate, so Q4'22 is left as a gap across every NU
+metric except where the Q3'22 / Q1'23 surrounding quarters cover the trailing/leading
+edges. This is the only single-quarter hole in NU's recent history and it is intrinsic
+to NU's filing choices, not a parser limitation.
 
 ### Managerial vs statutory revenue (Q4'25+) — comparison-safe choice
 

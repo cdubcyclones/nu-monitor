@@ -195,10 +195,9 @@ def ingest_nu_financials(cik: str) -> list[KpiRow]:
     for f in find_nufs_filings(cik):
         url = f.primary_doc_url
         raw = fetch(url, cache_key=("docs", f.primary_document))
-        # Some "nufs" exhibits are not the financial statements (e.g. nufs4q22 carries no
-        # income/balance lines; FY2022 audited figures are in the 20-F, out of v1 scope).
-        # Skip a doc that has no statement markers at all; still fail loud on a doc that has
-        # markers but whose structure we can't parse.
+        # Some "nufs" exhibits are not the financial statements (e.g. nufs4q22). Skip
+        # marker-less docs; still fail loud on docs that have markers but won't parse.
+        # See docs/DATA_SOURCES.md "Q4'22 -- the one unfillable hole".
         if not any(m in raw for m in (b"Total revenue", b"Total Revenue", b"Deposits")):
             continue
         fin = parse_financials(raw, url)

@@ -23,11 +23,31 @@ python -m nu_monitor ingest-all   # load NU (6-K parse) + peers (XBRL) into the 
 pytest
 ```
 
+## Known discontinuities — read before comparing
+
+A few things would silently mislead a reviewer who didn't know them. Full details and
+source quotes live in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md); the short version:
+
+- **Revenue definition (Q4'25+): managerial vs statutory.** NU's new-format earnings
+  release introduces a "Managerial P&L" whose `Total Revenue` differs from the statutory
+  IFRS `Total revenue` by ~+3.5 % (Q4'25: managerial 4,857.3 vs IFRS 4,685.9 $M). Net
+  income is identical under both. **We use statutory IFRS** as the canonical `revenue`
+  so the series is uniform across all quarters and more peer-comparable.
+- **Efficiency ratio — redefined at Q4'25** (~27.7 % → 17.6 %; a methodology change, not
+  improvement). Stored as separate `v1`/`v2` series via the `definition_version` column.
+  **Never chart `efficiency_ratio` v1 and v2 as one line** without an explicit caveat.
+  Same versioning applied to `npl_15_90` / `npl_90_plus` (Brazil-only → consolidated).
+- **One quarter is genuinely unfillable: Q4'22.** Both the earnings release and the
+  financial-statements exhibit fail for Q4'22 (the release was published as slide images
+  with no machine-readable text; `nufs4q22` is not actually a financial-statements doc).
+  FY2022 audited figures live in the 20-F, out of v1 scope. Documented in
+  [docs/DATA_SOURCES.md § Q4'22](docs/DATA_SOURCES.md#q422--the-one-unfillable-hole).
+
 ## Status
 
 - [x] Phase 0 — scaffold + schema
-- [x] Phase 1 — EDGAR ingestion + KPI panel (NU 6-K parse + SoFi/Block/PayPal XBRL)
-- [ ] Phase 2 — Brazil macro layer (BCB, IBGE)
-- [ ] Phase 3 — signal + out-of-sample validation
+- [x] Phase 1 — EDGAR ingestion + KPI panel (NU 6-K parse + IFRS backfill + peer XBRL)
+- [ ] Phase 2 — Brazil macro layer (Selic + household default, BCB SGS only — minimal)
+- [ ] Phase 3 — centerpiece analysis (TBD; see [docs/FINDINGS.md](docs/FINDINGS.md))
 - [ ] Phase 4 — Streamlit dashboard
 - [ ] Phase 5 — docs & packaging

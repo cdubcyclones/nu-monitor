@@ -16,23 +16,39 @@ documented in [docs/FINDINGS.md](docs/FINDINGS.md). The project now ships **Cent
 (cross-company growth & profitability, scoped in [docs/CENTERPIECE.md](docs/CENTERPIECE.md))
 as the headline deliverable, with a minimal Brazil-macro overlay as labeled context.
 
-## Setup
+## Setup (Windows PowerShell)
 
 ```powershell
+# 1. Create and activate a virtualenv. If PowerShell blocks activation, run once:
+#    Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+
+# 2. Install the package (editable). Required for the dashboard's absolute imports.
 pip install -e ".[dev]"
 
-# SEC blocks requests without a contact email. Copy and edit:
-copy .env.example .env   # then set SEC_USER_AGENT to your email
+# 3. SEC blocks requests without a contact email. Copy and edit:
+Copy-Item .env.example .env   # then open .env and set SEC_USER_AGENT to your email
 
-python -m nu_monitor              # initializes data/nu.duckdb with the kpi_panel schema
+# 4. Initialize the DuckDB store, then ingest:
+python -m nu_monitor              # creates data/nu.duckdb with the kpi_panel schema
 python -m nu_monitor ingest-all   # NU releases -> NU IFRS backfill -> peers -> BR_MACRO
+
+# 5. Run the test suite:
 pytest
 
-# Centerpiece dashboard:
-streamlit run src/nu_monitor/app/dashboard.py
+# 6. Launch the centerpiece dashboard:
+streamlit run src\nu_monitor\app\dashboard.py
+# then open http://localhost:8501 in a browser.
 ```
+
+> **Note for dashboard maintainers.** `src/nu_monitor/app/dashboard.py` is invoked by
+> Streamlit as a top-level script (`__package__=None`), so its imports must be
+> **absolute** (`from nu_monitor.config import ...`). Relative imports raise
+> `ImportError: attempted relative import with no known parent package` at runtime
+> even though `pip install -e .` succeeds at install time. All other modules are
+> reached via `python -m nu_monitor` or the `nu-monitor` console script and keep
+> package context, so relative imports are fine there.
 
 ## Centerpiece — what the panel shows
 

@@ -14,8 +14,14 @@ import duckdb
 import pandas as pd
 import streamlit as st
 
-from ..config import DB_PATH
-from ..derive.metrics import cohort_snapshots, latest_deposits_pair, revenue_crossover
+# Streamlit invokes this file as a top-level script (no parent package), so the
+# imports below must be ABSOLUTE. Relative `from ..config import ...` would raise
+# `ImportError: attempted relative import with no known parent package` at runtime
+# even though `pip install -e .` succeeds. This module is the only Streamlit
+# entry point in the package; modules invoked only via `python -m nu_monitor`
+# (e.g. __main__.py) keep package context and can keep relative imports.
+from nu_monitor.config import DB_PATH
+from nu_monitor.derive.metrics import cohort_snapshots, latest_deposits_pair, revenue_crossover
 
 COHORT = ["NU", "SOFI", "SQ", "PYPL"]
 COLORS = {"NU": "#9333EA", "SOFI": "#0EA5E9", "SQ": "#10B981", "PYPL": "#F59E0B"}

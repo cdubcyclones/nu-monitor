@@ -92,15 +92,20 @@ st.header("Chart 1 — Revenue scale & trajectory")
 rev_df = cohort_df[(cohort_df["metric"] == "revenue") & (cohort_df["definition_version"] == "v1")]
 chart1 = (
     alt.Chart(rev_df)
-    .mark_line(point=True)
+    .mark_line(point=True, strokeWidth=2)
     .encode(
-        x=alt.X("period_end:T", title="quarter end"),
-        y=alt.Y("value:Q", scale=alt.Scale(type="log"),
-                title="quarterly revenue (US$M, log scale)"),
-        color=alt.Color("company:N", scale=color_scale, title=""),
-        tooltip=["company", "period_end:T", alt.Tooltip("value:Q", title="revenue ($M)", format=",.1f")],
+        x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
+        y=alt.Y(
+            "value:Q",
+            scale=alt.Scale(type="log"),
+            title="Quarterly revenue (US$M, log scale)",
+            axis=alt.Axis(format=",.0f"),
+        ),
+        color=alt.Color("company:N", scale=color_scale, title="Company"),
+        tooltip=["company", "period_end:T",
+                 alt.Tooltip("value:Q", title="revenue ($M)", format=",.1f")],
     )
-    .properties(height=320)
+    .properties(height=340)
 )
 st.altair_chart(chart1, use_container_width=True)
 st.caption(
@@ -118,17 +123,18 @@ st.header("Chart 2 — Net margin trajectory")
 margin_df = _wide_rev_ni(cohort_df)
 chart2 = (
     alt.Chart(margin_df)
-    .mark_line(point=True)
+    .mark_line(point=True, strokeWidth=2)
     .encode(
-        x=alt.X("period_end:T", title="quarter end"),
-        y=alt.Y("margin:Q", title="net margin (net income / revenue, %)"),
-        color=alt.Color("company:N", scale=color_scale, title=""),
+        x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
+        y=alt.Y("margin:Q", title="Net margin (net income / revenue, %)",
+                axis=alt.Axis(format=".0f")),
+        color=alt.Color("company:N", scale=color_scale, title="Company"),
         tooltip=["company", "period_end:T",
                  alt.Tooltip("revenue:Q", title="revenue ($M)", format=",.1f"),
                  alt.Tooltip("net_income:Q", title="net income ($M)", format=",.1f"),
                  alt.Tooltip("margin:Q", title="margin (%)", format=".1f")],
     )
-    .properties(height=320)
+    .properties(height=340)
 )
 zero = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(color="#666", strokeDash=[4, 4]).encode(y="y:Q")
 st.altair_chart(chart2 + zero, use_container_width=True)
@@ -149,22 +155,29 @@ front_df = margin_df.sort_values(["company", "period_end"]).copy()
 last_per_co = front_df.groupby("company").tail(1)
 
 base = alt.Chart(front_df).encode(
-    x=alt.X("revenue:Q", scale=alt.Scale(type="log"), title="quarterly revenue (US$M, log scale)"),
-    y=alt.Y("margin:Q", title="net margin (%)"),
-    color=alt.Color("company:N", scale=color_scale, title=""),
+    x=alt.X(
+        "revenue:Q",
+        scale=alt.Scale(type="log"),
+        title="Quarterly revenue (US$M, log scale)",
+        axis=alt.Axis(format=",.0f"),
+    ),
+    y=alt.Y("margin:Q", title="Net margin (%)", axis=alt.Axis(format=".0f")),
+    color=alt.Color("company:N", scale=color_scale, title="Company"),
 )
-path = base.mark_line(opacity=0.55).encode(order="period_end:T")
+path = base.mark_line(opacity=0.55, strokeWidth=2).encode(order="period_end:T")
 points = base.mark_point(filled=True, size=55, opacity=0.85).encode(
     tooltip=["company", "period_end:T",
              alt.Tooltip("revenue:Q", title="revenue ($M)", format=",.1f"),
              alt.Tooltip("margin:Q", title="margin (%)", format=".1f")],
 )
-last_dot = alt.Chart(last_per_co).mark_point(filled=True, size=200, stroke="black", strokeWidth=1).encode(
+last_dot = alt.Chart(last_per_co).mark_point(
+    filled=True, size=240, stroke="black", strokeWidth=1
+).encode(
     x=alt.X("revenue:Q", scale=alt.Scale(type="log")),
     y="margin:Q",
     color=alt.Color("company:N", scale=color_scale),
 )
-last_label = alt.Chart(last_per_co).mark_text(align="left", dx=10, fontWeight="bold").encode(
+last_label = alt.Chart(last_per_co).mark_text(align="left", dx=12, fontWeight="bold", fontSize=13).encode(
     x=alt.X("revenue:Q", scale=alt.Scale(type="log")),
     y="margin:Q",
     text="company:N",
@@ -172,7 +185,8 @@ last_label = alt.Chart(last_per_co).mark_text(align="left", dx=10, fontWeight="b
 )
 zero_line = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(color="#666", strokeDash=[4, 4]).encode(y="y:Q")
 
-st.altair_chart(path + points + last_dot + last_label + zero_line, use_container_width=True)
+chart3_layered = (path + points + last_dot + last_label + zero_line).properties(height=440)
+st.altair_chart(chart3_layered, use_container_width=True)
 st.caption(
     "Each company's quarterly observations plotted in (revenue $M, net margin %) space, "
     "log-x; consecutive quarters connected to form the path-through-the-frontier. "
@@ -194,17 +208,19 @@ dep_df = panel[
     & (panel["definition_version"] == "v1")
     & (panel["company"].isin(["NU", "SOFI"]))
 ]
+pair_scale = alt.Scale(domain=["NU", "SOFI"], range=[COLORS["NU"], COLORS["SOFI"]])
 chart4 = (
     alt.Chart(dep_df)
-    .mark_line(point=True)
+    .mark_line(point=True, strokeWidth=2)
     .encode(
-        x=alt.X("period_end:T", title="quarter end"),
-        y=alt.Y("value:Q", title="deposits (US$B)"),
-        color=alt.Color("company:N", scale=color_scale, title=""),
+        x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
+        y=alt.Y("value:Q", title="Customer deposits (US$B)",
+                axis=alt.Axis(format=",.0f")),
+        color=alt.Color("company:N", scale=pair_scale, title="Company"),
         tooltip=["company", "period_end:T",
                  alt.Tooltip("value:Q", title="deposits ($B)", format=",.1f")],
     )
-    .properties(height=320)
+    .properties(height=340)
 )
 st.altair_chart(chart4, use_container_width=True)
 st.caption(
@@ -240,18 +256,19 @@ overlay_colors = {
 }
 chart5 = (
     alt.Chart(overlay)
-    .mark_line(point=True)
+    .mark_line(point=True, strokeWidth=2)
     .encode(
-        x=alt.X("period_end:T", title="quarter end"),
-        y=alt.Y("value:Q", title="percent"),
+        x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
+        y=alt.Y("value:Q", title="Percent", axis=alt.Axis(format=".0f")),
         color=alt.Color(
             "series:N",
             scale=alt.Scale(domain=list(overlay_colors), range=list(overlay_colors.values())),
-            title="",
+            title="Series",
+            legend=alt.Legend(orient="bottom", direction="vertical", labelLimit=400),
         ),
         tooltip=["series", "period_end:T", alt.Tooltip("value:Q", format=".2f")],
     )
-    .properties(height=340)
+    .properties(height=360)
 )
 st.altair_chart(chart5, use_container_width=True)
 st.caption(

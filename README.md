@@ -58,6 +58,8 @@ common window — the goal is to characterize the path each company actually tra
 
 ### Chart 1 — Revenue scale & trajectory
 
+![Chart 1 — Revenue scale & trajectory](docs/images/chart_1.png)
+
 | Company | Window | Revenue, first → last | Quarterly revenue CAGR |
 |---|---|---:|---:|
 | **NU** | Q4'21 → Q1'26 (4.25 y) | **$636 M → $4,968 M** | **62.3 %/yr** |
@@ -76,6 +78,8 @@ Caveat carried in the chart caption: revenue definitions are **not strictly iden
 
 ### Chart 2 — Net margin trajectory
 
+![Chart 2 — Net margin trajectory](docs/images/chart_2.png)
+
 | Company | First profitable qtr | Margin trajectory summary |
 |---|---|---|
 | **NU** | Q3'22 | Monotonic expansion: **0.6 % (Q3'22) → 17.5 % (Q1'26), +16.9 pp over 3.5 y** |
@@ -90,6 +94,8 @@ slightly from its 2019 starting level. Block's series is too volatile for a clea
 first-to-last summary; the chart line is the honest representation.
 
 ### Chart 3 — The frontier (scale × margin)
+
+![Chart 3 — The frontier (scale vs margin)](docs/images/chart_3.png)
 
 NU traces a path from the loss / small-revenue corner up to the high-margin / large-scale
 region: Q3'22 sat at ($1.3 B, 0.6 %), Q1'26 sits at ($5.0 B, 17.5 %). PayPal sits in a
@@ -114,6 +120,8 @@ backup if the single panel ever stops reading clearly.)
 
 ### Chart 4 — Deposits: NU vs SoFi
 
+![Chart 4 — Deposits: NU vs SoFi](docs/images/chart_4.png)
+
 At Q1'26: NU $42.4 B, SoFi $40.2 B → **NU / SoFi = 1.05×**.
 
 The interesting fact this puts on the page: NU and SoFi run a **near-parity deposit
@@ -123,6 +131,8 @@ structural difference between these two deposit-funded digital banks, not an
 artifact of the panel.
 
 ### Chart 5 — Brazil-context overlay (contextual only)
+
+![Chart 5 — NU credit quality in the Brazilian household credit cycle (contextual only)](docs/images/chart_5.png)
 
 NU NPL 15-90 v1 (Brazil-only definition) is shown alongside BCB household default
 (SGS 21084) and Selic target (SGS 432) for Q4'21 → Q1'26. **No relationship is claimed
@@ -162,6 +172,6 @@ source quotes live in [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md); the short ve
 - [x] Phase 0 — scaffold + schema
 - [x] Phase 1 — EDGAR ingestion + KPI panel (NU 6-K parse + IFRS backfill + peer XBRL)
 - [x] Phase 2 — Brazil macro layer (Selic + PF household default, BCB SGS only — minimal context overlay)
-- [x] Phase 3 — centerpiece analysis (Centerpiece A; see [docs/CENTERPIECE.md](docs/CENTERPIECE.md)) — *unpolished*
-- [x] Phase 4 — Streamlit dashboard (4 charts + Brazil overlay) — *unpolished*
-- [ ] Phase 5 — polish/styling pass + docs/packaging cleanup
+- [x] Phase 3 — centerpiece analysis (Centerpiece A; see [docs/CENTERPIECE.md](docs/CENTERPIECE.md))
+- [x] Phase 4 — Streamlit dashboard (4 charts + Brazil overlay)
+- [x] Phase 5 — polish pass: axis/legend cleanup, README screenshots embedded

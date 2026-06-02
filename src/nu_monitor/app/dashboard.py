@@ -96,23 +96,60 @@ color_scale = alt.Scale(domain=COHORT, range=[COLORS[c] for c in COHORT])
 st.header("Chart 1 — Revenue scale & trajectory")
 
 rev_df = cohort_df[(cohort_df["metric"] == "revenue") & (cohort_df["definition_version"] == "v1")]
-chart1 = (
-    alt.Chart(rev_df)
-    .mark_line(point=True, strokeWidth=2)
-    .encode(
-        x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
-        y=alt.Y(
-            "value:Q",
-            scale=alt.Scale(type="log"),
-            title="Quarterly revenue (US$M, log scale)",
-            axis=alt.Axis(format=",.0f"),
-        ),
-        color=alt.Color("company:N", scale=color_scale, title="Company"),
-        tooltip=["company", "period_end:T",
-                 alt.Tooltip("value:Q", title="revenue ($M)", format=",.1f")],
-    )
-    .properties(height=340)
+
+# Google-Finance-style hover readout: a selection that snaps to the nearest x-axis
+# data point on mouseover, driving a vertical rule and one inline value label per
+# company. Behavior is layered onto the existing styled line chart; styling, color
+# scale, legend, axis labels, and caption are unchanged.
+chart1_base = alt.Chart(rev_df).encode(
+    x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
+    y=alt.Y(
+        "value:Q",
+        scale=alt.Scale(type="log"),
+        title="Quarterly revenue (US$M, log scale)",
+        axis=alt.Axis(format=",.0f"),
+    ),
+    color=alt.Color("company:N", scale=color_scale, title="Company"),
 )
+
+chart1_lines = chart1_base.mark_line(point=True, strokeWidth=2).encode(
+    tooltip=["company", "period_end:T",
+             alt.Tooltip("value:Q", title="revenue ($M)", format=",.1f")],
+)
+
+chart1_nearest = alt.selection_point(
+    nearest=True, on="mouseover", fields=["period_end"], empty=False,
+)
+
+# Transparent points layered across the chart capture the mouseover hit-tests.
+chart1_selectors = (
+    chart1_base.mark_point().encode(opacity=alt.value(0)).add_params(chart1_nearest)
+)
+
+# Vertical rule shown only at the selected x.
+chart1_rule = (
+    alt.Chart(rev_df)
+    .mark_rule(color="#777", strokeDash=[3, 3])
+    .encode(x="period_end:T")
+    .transform_filter(chart1_nearest)
+)
+
+# Filled colored dots at the selected x for each company.
+chart1_hover_pts = chart1_base.mark_point(
+    filled=True, size=110, stroke="black", strokeWidth=1,
+).encode(opacity=alt.condition(chart1_nearest, alt.value(1), alt.value(0)))
+
+# Inline value labels colored to match each line. Stacked along y by line position
+# (each label sits next to its own data point). Small dx pushes them right of the rule.
+chart1_hover_labels = chart1_base.mark_text(
+    align="left", dx=10, dy=-10, fontWeight="bold", fontSize=12,
+).encode(
+    text=alt.condition(chart1_nearest, alt.Text("value:Q", format=",.0f"), alt.value(" ")),
+)
+
+chart1 = (
+    chart1_lines + chart1_selectors + chart1_rule + chart1_hover_pts + chart1_hover_labels
+).properties(height=340)
 st.altair_chart(chart1, use_container_width=True)
 st.caption(
     "Quarterly total revenue, log y-axis. **Revenue definitions are not strictly "

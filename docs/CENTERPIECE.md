@@ -225,8 +225,15 @@ as Phase 2: stop and ask.
 
 - **2026-05-29 — Interactive hover readout on Chart 1.** User request after polish pass.
   Adds a Google-Finance-style hover behavior to Chart 1 only: a vertical rule that
-  follows the cursor snapping to the nearest x-axis data point, plus one inline value
-  label per company colored to match its line. The previous § 5 entry "No dashboard
+  follows the cursor snapping to the nearest x-axis data point, colored dots at each
+  company's value at that x, and a **single consolidated tooltip box** listing the
+  quarter and all four companies' revenues (built via `transform_pivot` long→wide so
+  one tooltip can reference NU / SOFI / SQ / PYPL simultaneously, instead of the
+  default Vega-Lite per-series tooltip). The previous § 5 entry "No dashboard
   interactivity beyond company selection and date range" is relaxed for this single
   read-only hover behavior; no drill-downs, exports, or filters are added. Charts 2-5
   remain unchanged pending review of how the Chart 1 implementation reads.
+
+  *Implementation note (2026-05-29 revision):* Initial implementation used per-line
+  inline text labels; switched to the consolidated tooltip box per follow-up. The
+  on-line colored dots stay — they preserve the dot-color-to-company link visually.

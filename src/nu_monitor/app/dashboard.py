@@ -97,10 +97,13 @@ st.header("Chart 1 — Revenue scale & trajectory")
 
 rev_df = cohort_df[(cohort_df["metric"] == "revenue") & (cohort_df["definition_version"] == "v1")]
 
-# Google-Finance-style hover readout: a selection that snaps to the nearest x-axis
-# data point on mouseover, driving a vertical rule and one inline value label per
-# company. Behavior is layered onto the existing styled line chart; styling, color
-# scale, legend, axis labels, and caption are unchanged.
+# Google-Finance-style hover readout: selection snaps to the nearest x-axis data point
+# on mouseover, driving (a) a vertical dashed rule, (b) colored dots at each line's
+# value at that x, and (c) ONE consolidated tooltip box listing all four companies at
+# that quarter. The tooltip is built by pivoting long->wide (`transform_pivot`) so a
+# single tooltip encoding can reference NU / SOFI / SQ / PYPL simultaneously, instead of
+# per-line tooltips that only show the hovered series. Styling / color scale / legend /
+# axis labels / caption are unchanged from the polish-pass version.
 chart1_base = alt.Chart(rev_df).encode(
     x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
     y=alt.Y(
@@ -112,21 +115,16 @@ chart1_base = alt.Chart(rev_df).encode(
     color=alt.Color("company:N", scale=color_scale, title="Company"),
 )
 
-chart1_lines = chart1_base.mark_line(point=True, strokeWidth=2).encode(
-    tooltip=["company", "period_end:T",
-             alt.Tooltip("value:Q", title="revenue ($M)", format=",.1f")],
-)
+# Lines have NO tooltip channel of their own -- the consolidated tooltip below is the
+# single readout for hover. Avoids the "default Vega-Lite tooltip showing only the
+# hovered series" behavior.
+chart1_lines = chart1_base.mark_line(point=True, strokeWidth=2)
 
 chart1_nearest = alt.selection_point(
     nearest=True, on="mouseover", fields=["period_end"], empty=False,
 )
 
-# Transparent points layered across the chart capture the mouseover hit-tests.
-chart1_selectors = (
-    chart1_base.mark_point().encode(opacity=alt.value(0)).add_params(chart1_nearest)
-)
-
-# Vertical rule shown only at the selected x.
+# Vertical dashed rule shown only at the selected x.
 chart1_rule = (
     alt.Chart(rev_df)
     .mark_rule(color="#777", strokeDash=[3, 3])
@@ -134,21 +132,35 @@ chart1_rule = (
     .transform_filter(chart1_nearest)
 )
 
-# Filled colored dots at the selected x for each company.
+# Filled colored dot at the selected x for each company's line.
 chart1_hover_pts = chart1_base.mark_point(
     filled=True, size=110, stroke="black", strokeWidth=1,
 ).encode(opacity=alt.condition(chart1_nearest, alt.value(1), alt.value(0)))
 
-# Inline value labels colored to match each line. Stacked along y by line position
-# (each label sits next to its own data point). Small dx pushes them right of the rule.
-chart1_hover_labels = chart1_base.mark_text(
-    align="left", dx=10, dy=-10, fontWeight="bold", fontSize=12,
-).encode(
-    text=alt.condition(chart1_nearest, alt.Text("value:Q", format=",.0f"), alt.value(" ")),
+# Consolidated tooltip box: pivot long->wide so each quarter has one row with NU / SOFI
+# / SQ / PYPL columns, then attach a single `tooltip=[...]` listing all four. The mark
+# is a 20-pixel-wide invisible vertical rule at each x so the hit-target is comfortable.
+# This layer also drives the `nearest` selection (so the rule + dots + tooltip share
+# one trigger). Topmost layer in the composition so it wins pointer events.
+chart1_tooltip_trigger = (
+    alt.Chart(rev_df)
+    .transform_pivot("company", value="value", groupby=["period_end"])
+    .mark_rule(opacity=0, strokeWidth=20)
+    .encode(
+        x="period_end:T",
+        tooltip=[
+            alt.Tooltip("yearquarter(period_end):T", title="Quarter"),
+            alt.Tooltip("NU:Q", title="NU", format=",.0f"),
+            alt.Tooltip("SOFI:Q", title="SOFI", format=",.0f"),
+            alt.Tooltip("SQ:Q", title="SQ", format=",.0f"),
+            alt.Tooltip("PYPL:Q", title="PYPL", format=",.0f"),
+        ],
+    )
+    .add_params(chart1_nearest)
 )
 
 chart1 = (
-    chart1_lines + chart1_selectors + chart1_rule + chart1_hover_pts + chart1_hover_labels
+    chart1_lines + chart1_rule + chart1_hover_pts + chart1_tooltip_trigger
 ).properties(height=340)
 st.altair_chart(chart1, use_container_width=True)
 st.caption(

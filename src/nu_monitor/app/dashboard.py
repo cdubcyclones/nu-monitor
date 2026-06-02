@@ -145,23 +145,34 @@ chart1_hover_pts = chart1_base.mark_point(
 chart1_tooltip_trigger = (
     alt.Chart(rev_df)
     .transform_pivot("company", value="value", groupby=["period_end"])
+    # Genuine panel gaps (peer Q4 quarters skipped due to the documented XBRL
+    # calendar-frame quirk; pre-IPO quarters for younger companies) leave null
+    # cells in the pivoted frame. Default Vega tooltip formatting renders those
+    # nulls as the literal string "NaN" -- never acceptable to show the user.
+    # Convert each value through isValid()+format() with an em-dash fallback so
+    # the tooltip shows real values where they exist and "—" where they don't.
+    .transform_calculate(
+        nu_str  ="isValid(datum.NU)   ? format(datum.NU,   ',.0f') : '—'",
+        sofi_str="isValid(datum.SOFI) ? format(datum.SOFI, ',.0f') : '—'",
+        sq_str  ="isValid(datum.SQ)   ? format(datum.SQ,   ',.0f') : '—'",
+        pypl_str="isValid(datum.PYPL) ? format(datum.PYPL, ',.0f') : '—'",
+    )
     .mark_rule(opacity=0, strokeWidth=20)
     .encode(
         x="period_end:T",
         tooltip=[
             alt.Tooltip("period_end:T", title="Quarter", format="%Y Q%q"),
-            # Unicode bullet "●" prepended to each ticker title. The glyph naturally
-            # scales to the row's font size, so its visual height matches the ticker
-            # letter height (the user's stated sizing requirement). NOTE: default
-            # Vega-Tooltip renders all rows in a single text color, so the bullets are
-            # monochrome -- per-row color tinting needs Vega-Tooltip's HTML-rendering
-            # mode (requires JS-side embed config and can't pass through
-            # st.altair_chart cleanly). The on-chart hover dots (chart1_hover_pts)
-            # preserve the dot-color-to-company link visually.
-            alt.Tooltip("NU:Q", title="●  NU", format=",.0f"),
-            alt.Tooltip("SOFI:Q", title="●  SOFI", format=",.0f"),
-            alt.Tooltip("SQ:Q", title="●  SQ", format=",.0f"),
-            alt.Tooltip("PYPL:Q", title="●  PYPL", format=",.0f"),
+            # Unicode bullet "●" prepended to each ticker title; the glyph scales
+            # to the row's font size so its visual height matches the ticker
+            # letter height. Bullets render in the default tooltip text color
+            # (monochrome) -- per-row color tinting would need Vega-Tooltip's
+            # HTML-rendering mode which can't pass through st.altair_chart cleanly.
+            # The on-chart colored dots at the hovered x preserve the
+            # dot-color-to-company link visually.
+            alt.Tooltip("nu_str:N",   title="●  NU"),
+            alt.Tooltip("sofi_str:N", title="●  SOFI"),
+            alt.Tooltip("sq_str:N",   title="●  SQ"),
+            alt.Tooltip("pypl_str:N", title="●  PYPL"),
         ],
     )
     .add_params(chart1_nearest)

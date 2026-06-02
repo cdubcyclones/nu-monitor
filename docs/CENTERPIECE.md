@@ -263,3 +263,16 @@ as Phase 2: stop and ask.
   company (e.g. Q4'21, where margin is uncomputable for all four — the tooltip cleanly
   shows four em-dashes rather than not appearing). Charts 3, 4, 5 remain unchanged
   pending review.
+
+- **2026-05-29 — Chart 3 hover (per-point pattern, not consolidated).** Chart 3 is a
+  scatter (revenue × margin), not a time series, so the Charts-1-and-2 consolidated
+  pattern doesn't apply. Instead: `selection_point(nearest=True, on="mouseover",
+  empty=False)` *without* `fields=` so Vega builds a 2-D pixel-space Voronoi and the
+  cursor resolves to the **geometrically nearest observation** (not whichever was
+  drawn last, which matters when paths cross). The hovered point highlights via
+  conditional `size` (55 → 180) + `stroke` (`"white"` → `"black"`, `strokeWidth`
+  `0` → `1.5`). Tooltip shows one observation: `Company`, `Quarter` (`%Y Q%q`),
+  `Revenue` (thousand-separated `$M`), `Margin` (`.1f%` via `transform_calculate`).
+  No vertical rule and no extra on-line dots — those are time-axis affordances. No
+  per-row colored bullet either; the highlighted point on the chart already carries
+  the company color. Charts 4 and 5 remain unchanged.

@@ -302,10 +302,37 @@ base = alt.Chart(front_df).encode(
     color=alt.Color("company:N", scale=color_scale, title="Company"),
 )
 path = base.mark_line(opacity=0.55, strokeWidth=2).encode(order="period_end:T")
-points = base.mark_point(filled=True, size=55, opacity=0.85).encode(
-    tooltip=["company", "period_end:T",
-             alt.Tooltip("revenue:Q", title="revenue ($M)", format=",.1f"),
-             alt.Tooltip("margin:Q", title="margin (%)", format=".1f")],
+
+# Per-point hover pattern (different from Charts 1/2). Chart 3 is not a time series:
+# x is revenue and y is margin, so quarters from different companies that happen to
+# share a similar (revenue, margin) location are nearby in screen-space but NOT in
+# time-axis-space. The right pattern is a 2D-nearest selection (no `fields` arg ->
+# Vega builds a Voronoi diagram in pixel space) so the tooltip resolves to whichever
+# observation is geometrically closest to the cursor, not whichever was drawn last.
+chart3_nearest = alt.selection_point(
+    nearest=True, on="mouseover", empty=False,
+)
+points = (
+    base
+    # Precompute the "%-suffixed" margin string in Vega-Lite expression land so the
+    # tooltip row reads "Margin: 17.5%" rather than the unitless default.
+    .transform_calculate(margin_str="format(datum.margin, '.1f') + '%'")
+    .mark_point(filled=True, opacity=0.85)
+    .encode(
+        # Highlighted point under the cursor: ~3.3x size + black stroke. The size
+        # bump makes the hit obvious; the stroke survives even when the point
+        # color is light against the chart background.
+        size=alt.condition(chart3_nearest, alt.value(180), alt.value(55)),
+        stroke=alt.condition(chart3_nearest, alt.value("black"), alt.value("white")),
+        strokeWidth=alt.condition(chart3_nearest, alt.value(1.5), alt.value(0)),
+        tooltip=[
+            alt.Tooltip("company:N", title="Company"),
+            alt.Tooltip("period_end:T", title="Quarter", format="%Y Q%q"),
+            alt.Tooltip("revenue:Q", title="Revenue", format=",.0f"),
+            alt.Tooltip("margin_str:N", title="Margin"),
+        ],
+    )
+    .add_params(chart3_nearest)
 )
 last_dot = alt.Chart(last_per_co).mark_point(
     filled=True, size=240, stroke="black", strokeWidth=1

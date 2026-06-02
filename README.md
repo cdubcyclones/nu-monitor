@@ -57,6 +57,9 @@ streamlit run src\nu_monitor\app\dashboard.py
 > *Where does NU sit on the digital-banking cohort's growth-vs-profitability frontier,
 > and what does its trajectory through that space look like relative to its peers?*
 
+A short prose companion for a manager audience — lead finding, the comparative read,
+what I cut and why, limitations, forward look — lives at [docs/MEMO.md](docs/MEMO.md).
+
 Descriptive comparative read, not a tested relationship. Every number below is computed
 from `kpi_panel` rows with `definition_version='v1'`, joined per `(company, period_end)`.
 Each company's window is its own full panel range; CAGRs are over that window, not a

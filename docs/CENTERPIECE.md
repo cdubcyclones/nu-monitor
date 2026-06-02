@@ -237,3 +237,12 @@ as Phase 2: stop and ask.
   *Implementation note (2026-05-29 revision):* Initial implementation used per-line
   inline text labels; switched to the consolidated tooltip box per follow-up. The
   on-line colored dots stay — they preserve the dot-color-to-company link visually.
+
+  *Tooltip bullet revision (2026-05-29):* Unicode "●" prepended to each ticker row
+  (`●  NU`, `●  SOFI`, …) so each ticker has a leading dot whose height matches the
+  row's font size. The Quarter header row gets no bullet. Bullets render in the
+  default Vega-Tooltip text color (single color across all rows) because the default
+  handler doesn't expose per-row color styling without HTML rendering mode (which
+  needs JS-side embed config, not available cleanly through `st.altair_chart`). The
+  on-chart hover dots at the hovered x remain colored per-line and provide the
+  dot-color-to-company link visually.

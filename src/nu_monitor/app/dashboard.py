@@ -149,11 +149,19 @@ chart1_tooltip_trigger = (
     .encode(
         x="period_end:T",
         tooltip=[
-            alt.Tooltip("yearquarter(period_end):T", title="Quarter"),
-            alt.Tooltip("NU:Q", title="NU", format=",.0f"),
-            alt.Tooltip("SOFI:Q", title="SOFI", format=",.0f"),
-            alt.Tooltip("SQ:Q", title="SQ", format=",.0f"),
-            alt.Tooltip("PYPL:Q", title="PYPL", format=",.0f"),
+            alt.Tooltip("period_end:T", title="Quarter", format="%Y Q%q"),
+            # Unicode bullet "●" prepended to each ticker title. The glyph naturally
+            # scales to the row's font size, so its visual height matches the ticker
+            # letter height (the user's stated sizing requirement). NOTE: default
+            # Vega-Tooltip renders all rows in a single text color, so the bullets are
+            # monochrome -- per-row color tinting needs Vega-Tooltip's HTML-rendering
+            # mode (requires JS-side embed config and can't pass through
+            # st.altair_chart cleanly). The on-chart hover dots (chart1_hover_pts)
+            # preserve the dot-color-to-company link visually.
+            alt.Tooltip("NU:Q", title="●  NU", format=",.0f"),
+            alt.Tooltip("SOFI:Q", title="●  SOFI", format=",.0f"),
+            alt.Tooltip("SQ:Q", title="●  SQ", format=",.0f"),
+            alt.Tooltip("PYPL:Q", title="●  PYPL", format=",.0f"),
         ],
     )
     .add_params(chart1_nearest)

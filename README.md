@@ -16,7 +16,28 @@ documented in [docs/FINDINGS.md](docs/FINDINGS.md). The project now ships **Cent
 (cross-company growth & profitability, scoped in [docs/CENTERPIECE.md](docs/CENTERPIECE.md))
 as the headline deliverable, with a minimal Brazil-macro overlay as labeled context.
 
-## Setup (Windows PowerShell)
+## Run the dashboard
+
+- **Live hosted version:** _link forthcoming_ (Streamlit Community Cloud).
+- **Locally** (no API access required — the committed `data/nu.duckdb` carries the
+  panel through Q1'26):
+
+  ```powershell
+  python -m venv .venv
+  .\.venv\Scripts\Activate.ps1
+  pip install -e ".[dev]"
+  streamlit run src\nu_monitor\app\dashboard.py
+  # opens at http://localhost:8501
+  ```
+
+  No `.env` or SEC ingestion is needed to *view* the dashboard. They are only
+  needed to *refresh* the panel — see "Refresh the panel from source APIs" below.
+
+## Refresh the panel from source APIs (Windows PowerShell)
+
+Only needed when re-ingesting NU 6-K filings, peer XBRL, or BCB SGS series. The
+committed `data/nu.duckdb` already reflects the centerpiece narrative; refresh is
+optional unless a new quarter has been filed.
 
 ```powershell
 # 1. Create and activate a virtualenv. If PowerShell blocks activation, run once:

@@ -12,9 +12,13 @@ venv/
 # Environment
 .env
 
-# Generated data (regenerable from APIs)
-data/nu.duckdb
+# Raw fetch cache (regenerable from APIs; large; stays out of git)
 data/raw/
+
+# NOTE: data/nu.duckdb IS committed -- the hosted Streamlit dashboard reads it on
+# startup, and it's only ~1.3 MB. To refresh from the APIs:
+#   python -m nu_monitor ingest-all
+# then commit the updated data/nu.duckdb.
 
 # OS / editor
 .DS_Store

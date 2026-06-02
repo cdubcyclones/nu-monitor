@@ -1,5 +1,7 @@
 # NU Fundamentals & Signal Monitor
 
+**Live dashboard: <https://nu-monitor.streamlit.app/>**
+
 Brazil-first **comparative fundamentals dashboard** for Nu Holdings (NYSE: NU) and three
 digital-banking peers (SoFi, Block, PayPal), built on a normalized DuckDB panel sourced
 entirely from free, official data (SEC EDGAR + BCB SGS). Reproducible end-to-end; built
@@ -18,8 +20,8 @@ as the headline deliverable, with a minimal Brazil-macro overlay as labeled cont
 
 ## Run the dashboard
 
-- **Live hosted version: TBD — live URL forthcoming.** Streamlit Community Cloud
-  deploy is the next phase; this section will get the public URL once it's live.
+- **Live hosted version:** **<https://nu-monitor.streamlit.app/>** (Streamlit
+  Community Cloud, auto-redeploys on every push to `master`).
 - **Locally** (no API access required — the committed `data/nu.duckdb` carries the
   panel through Q1'26):
 

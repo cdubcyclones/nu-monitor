@@ -1,5 +1,8 @@
 # NU comparative fundamentals — what the panel shows
 
+*Companion to the live dashboard at <https://nu-monitor.streamlit.app/> — chart
+numbers below refer to the panels there.*
+
 **Lead finding.** At Q1'26, NU operates a customer deposit base of **$42.4 B**
 against SoFi's **$40.2 B** — a near-parity **1.05×** ratio — while running
 roughly **4.5× SoFi's quarterly revenue** ($4,968 M vs $1,100 M). Two

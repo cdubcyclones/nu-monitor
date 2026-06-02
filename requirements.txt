@@ -1,0 +1,16 @@
+# Runtime dependencies for the hosted Streamlit Cloud dashboard.
+#
+# Streamlit Cloud reads dependency files in this priority order:
+#   uv.lock > Pipfile > environment.yml > requirements.txt > pyproject.toml
+# `requirements.txt` is the first-class supported path on the platform, so
+# we ship it explicitly even though pyproject.toml carries the same list.
+# Versions must stay in sync with pyproject.toml; the dev-only `pytest`
+# extra is NOT mirrored here — the cloud build does not run tests.
+altair>=5.0
+beautifulsoup4>=4.12
+duckdb>=1.0
+httpx>=0.27
+lxml>=5.2
+pandas>=2.2
+pydantic>=2.7
+streamlit>=1.36

@@ -16,6 +16,7 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "pydantic>=2.7",
     "streamlit>=1.36",
+    "altair>=5.0",
 ]
 
 [project.optional-dependencies]

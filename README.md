@@ -26,13 +26,32 @@ as the headline deliverable, with a minimal Brazil-macro overlay as labeled cont
   ```powershell
   python -m venv .venv
   .\.venv\Scripts\Activate.ps1
-  pip install -e ".[dev]"
-  streamlit run src\nu_monitor\app\dashboard.py
+  pip install -r requirements.txt    # or `pip install -e ".[dev]"` for tests too
+  streamlit run streamlit_app.py
   # opens at http://localhost:8501
   ```
 
-  No `.env` or SEC ingestion is needed to *view* the dashboard. They are only
-  needed to *refresh* the panel — see "Refresh the panel from source APIs" below.
+  `streamlit_app.py` is the repo-root entry shim used by Streamlit Cloud — it
+  prepends `src/` to `sys.path` and delegates to the real dashboard at
+  `src/nu_monitor/app/dashboard.py`. Either entry point works locally; the shim is
+  what the hosted build runs. No `.env` or SEC ingestion is needed to *view* the
+  dashboard. They are only needed to *refresh* the panel — see "Refresh the panel
+  from source APIs" below.
+
+### Streamlit Community Cloud deploy notes (for the maintainer)
+
+The hosted deploy expects, and the repo already provides:
+
+- **Entry point:** `streamlit_app.py` at the repo root.
+- **Dependencies:** `requirements.txt` at the repo root (first-class supported on
+  the platform; mirrors `pyproject.toml`'s runtime deps).
+- **Data:** `data/nu.duckdb` is committed (1.3 MB). No first-launch ingestion;
+  the dashboard reads the file directly.
+- **Secrets:** **none**. `SEC_USER_AGENT` is only needed to *refresh* the panel via
+  the ingestion pipeline; viewing the dashboard does not touch any external API.
+- **Python version:** **3.12** (pin in the Streamlit Cloud deploy UI's *Advanced
+  settings* dropdown — Streamlit Cloud no longer honors `runtime.txt` reliably as
+  of 2026, so file-based pinning is not used here).
 
 ## Refresh the panel from source APIs (Windows PowerShell)
 

@@ -246,3 +246,20 @@ as Phase 2: stop and ask.
   needs JS-side embed config, not available cleanly through `st.altair_chart`). The
   on-chart hover dots at the hovered x remain colored per-line and provide the
   dot-color-to-company link visually.
+
+  *NaN-cell fix (2026-05-29):* Genuine panel gaps (peer Q4 quarters skipped due to the
+  documented XBRL calendar-frame quirk; pre-listing quarters for younger companies)
+  leave null cells in the pivoted frame. Default Vega tooltip formatting renders those
+  nulls as the literal string "NaN" — never acceptable to show the user. A
+  `transform_calculate` stage between the pivot and the tooltip encoding maps each
+  company's value through `isValid(datum.X) ? format(datum.X, ...) : '—'` so missing
+  cells render as an em-dash; `NaN` never reaches the user.
+
+- **2026-05-29 — Chart 2 hover propagation.** Same consolidated-tooltip + vertical-rule +
+  on-line-dots pattern applied to Chart 2 (Net margin trajectory). Values rendered as
+  `".1f%"` (e.g. `17.5%`); same ● bullet, same em-dash fallback, same NU/SOFI/SQ/PYPL
+  row order. Implementation adds a parallel null-preserving rev+ni-per-quarter frame
+  so the trigger fires at quarters where neither rev nor ni is reported for any
+  company (e.g. Q4'21, where margin is uncomputable for all four — the tooltip cleanly
+  shows four em-dashes rather than not appearing). Charts 3, 4, 5 remain unchanged
+  pending review.

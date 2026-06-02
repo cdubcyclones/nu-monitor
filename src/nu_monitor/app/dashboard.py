@@ -194,24 +194,87 @@ st.caption(
 # ---------------------------------------------------------------------------
 st.header("Chart 2 — Net margin trajectory")
 
+# margin_df (used by the visible line + on-line dots) drops rows where rev OR ni is
+# missing -- lines should only draw where the margin can actually be computed.
 margin_df = _wide_rev_ni(cohort_df)
-chart2 = (
-    alt.Chart(margin_df)
-    .mark_line(point=True, strokeWidth=2)
-    .encode(
-        x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
-        y=alt.Y("margin:Q", title="Net margin (net income / revenue, %)",
-                axis=alt.Axis(format=".0f")),
-        color=alt.Color("company:N", scale=color_scale, title="Company"),
-        tooltip=["company", "period_end:T",
-                 alt.Tooltip("revenue:Q", title="revenue ($M)", format=",.1f"),
-                 alt.Tooltip("net_income:Q", title="net income ($M)", format=",.1f"),
-                 alt.Tooltip("margin:Q", title="margin (%)", format=".1f")],
-    )
-    .properties(height=340)
+
+# A parallel null-preserving frame for the rule and the tooltip trigger. It has one
+# row per (company, period_end) where ANY rev or ni was reported -- e.g. NU Q4'21
+# has a row (rev=635.9, ni=null, margin=null) so the trigger still fires at that x,
+# but transform_calculate below turns the null margin into "—" in the tooltip box.
+_rev_ni_v1 = cohort_df[
+    cohort_df["metric"].isin(["revenue", "net_income"]) & (cohort_df["definition_version"] == "v1")
+]
+chart2_rev_ni_per_qtr = (
+    _rev_ni_v1.pivot_table(
+        index=["company", "period_end"], columns="metric", values="value", aggfunc="first",
+    ).reset_index()
 )
+chart2_rev_ni_per_qtr["margin"] = (
+    chart2_rev_ni_per_qtr["net_income"] / chart2_rev_ni_per_qtr["revenue"]
+) * 100.0
+
+# Hover readout (consolidated tooltip box) propagated from Chart 1. Same five layers:
+# lines (no per-line tooltip), vertical rule, on-line colored dots, transparent
+# 20-px-wide tooltip trigger with the pivoted+calculated consolidated rows, and the
+# always-on zero rule. Identical layout: ● bullet, em-dash for missing, NU/SOFI/SQ/PYPL
+# row order. Values are net margin percentages formatted ".1f%".
+chart2_base = alt.Chart(margin_df).encode(
+    x=alt.X("period_end:T", title="Quarter end", axis=alt.Axis(format="%Y Q%q")),
+    y=alt.Y("margin:Q", title="Net margin (net income / revenue, %)",
+            axis=alt.Axis(format=".0f")),
+    color=alt.Color("company:N", scale=color_scale, title="Company"),
+)
+
+chart2_lines = chart2_base.mark_line(point=True, strokeWidth=2)
+
+chart2_nearest = alt.selection_point(
+    nearest=True, on="mouseover", fields=["period_end"], empty=False,
+)
+
+# Rule data source = the null-preserving rev_ni frame so the rule draws at every
+# quarter where ANY rev/ni was reported (covers NU Q4'21 etc.), not just where margin
+# is computable.
+chart2_rule = (
+    alt.Chart(chart2_rev_ni_per_qtr)
+    .mark_rule(color="#777", strokeDash=[3, 3])
+    .encode(x="period_end:T")
+    .transform_filter(chart2_nearest)
+)
+
+chart2_hover_pts = chart2_base.mark_point(
+    filled=True, size=110, stroke="black", strokeWidth=1,
+).encode(opacity=alt.condition(chart2_nearest, alt.value(1), alt.value(0)))
+
+chart2_tooltip_trigger = (
+    alt.Chart(chart2_rev_ni_per_qtr)
+    .transform_pivot("company", value="margin", groupby=["period_end"])
+    .transform_calculate(
+        nu_str  ="isValid(datum.NU)   ? format(datum.NU,   '.1f') + '%' : '—'",
+        sofi_str="isValid(datum.SOFI) ? format(datum.SOFI, '.1f') + '%' : '—'",
+        sq_str  ="isValid(datum.SQ)   ? format(datum.SQ,   '.1f') + '%' : '—'",
+        pypl_str="isValid(datum.PYPL) ? format(datum.PYPL, '.1f') + '%' : '—'",
+    )
+    .mark_rule(opacity=0, strokeWidth=20)
+    .encode(
+        x="period_end:T",
+        tooltip=[
+            alt.Tooltip("period_end:T", title="Quarter", format="%Y Q%q"),
+            alt.Tooltip("nu_str:N",   title="●  NU"),
+            alt.Tooltip("sofi_str:N", title="●  SOFI"),
+            alt.Tooltip("sq_str:N",   title="●  SQ"),
+            alt.Tooltip("pypl_str:N", title="●  PYPL"),
+        ],
+    )
+    .add_params(chart2_nearest)
+)
+
 zero = alt.Chart(pd.DataFrame({"y": [0]})).mark_rule(color="#666", strokeDash=[4, 4]).encode(y="y:Q")
-st.altair_chart(chart2 + zero, use_container_width=True)
+
+chart2 = (
+    chart2_lines + chart2_rule + chart2_hover_pts + chart2_tooltip_trigger + zero
+).properties(height=340)
+st.altair_chart(chart2, use_container_width=True)
 st.caption(
     "Net margin = `net_income / revenue * 100`. **Cross-GAAP and cross-presentation "
     "differences** in the numerator and denominator persist (see Chart 1); a margin "

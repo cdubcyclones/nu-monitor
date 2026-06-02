@@ -18,7 +18,8 @@ as the headline deliverable, with a minimal Brazil-macro overlay as labeled cont
 
 ## Run the dashboard
 
-- **Live hosted version:** _link forthcoming_ (Streamlit Community Cloud).
+- **Live hosted version: TBD — live URL forthcoming.** Streamlit Community Cloud
+  deploy is the next phase; this section will get the public URL once it's live.
 - **Locally** (no API access required — the committed `data/nu.duckdb` carries the
   panel through Q1'26):
 
